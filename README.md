@@ -103,13 +103,24 @@ http://localhost:8091/#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_x
 
 ## Verifying integrity
 
-For maximum trust, verify the hosted version matches the published release:
+To verify Cloudflare Pages is serving the exact code committed here, fetch the raw bytes with `curl` and compare with the file hash in the latest [GitHub release](https://github.com/boblauzon/keyvault-sidekick/releases):
 
-1. Open https://keyvault-sidekick.pages.dev
-2. Click the **`?`** button in the topbar
-3. Scroll to **Integrity verification**
-4. Compare the SHA-256 shown with the **runtime hash** in the matching [GitHub release](https://github.com/boblauzon/keyvault-sidekick/releases)
-5. Match → CDN is serving the published code. Mismatch → **don't enter your master password**, run locally instead.
+```bash
+# 1. Fetch raw HTML (bypassing any browser serialization)
+curl -o keyvault.html https://keyvault-sidekick.pages.dev/
+
+# 2. Hash it
+certutil -hashfile keyvault.html SHA256     # Windows
+shasum -a 256 keyvault.html                 # macOS / Linux
+
+# 3. Compare with the "File hash" in the GitHub release notes
+```
+
+If the hashes match → CDN is serving the published code. Mismatch → **don't enter your master password**; clone the repo locally instead.
+
+**Why not use the browser's "Save As"?** The browser saves a re-serialized form of the parsed DOM, which is not byte-identical to the raw source (small differences from UTF-8 BOM, attribute normalization, etc.). The in-app "Save offline copy" has the same caveat — it's for offline use, not hash verification. Use `curl` for byte-level verification.
+
+The runtime hash shown in the app footer is a **self-consistency indicator**, not a verification target: as long as it's stable across reloads, the page hasn't been tampered with mid-session.
 
 ## Running locally
 

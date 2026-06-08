@@ -2890,7 +2890,7 @@
                   machine instead.
                 </p>
 
-                <h2 style="font-size:11px;margin-top:24px">This page's hash</h2>
+                <h2 style="font-size:11px;margin-top:24px">This page's runtime hash</h2>
 
                 <div class="integrity-panel">
                   <div class="integrity-row">
@@ -2900,16 +2900,39 @@
                   </div>
                 </div>
 
-                <p>
-                  Compare this hash with the one we publish in each GitHub release.
-                  If they match → the CDN served the exact code we published.
-                  If they differ → consider running locally instead.
+                <p style="font-size:12px;color:var(--text-mute)">
+                  This hash is computed from <code>document.documentElement.outerHTML</code> —
+                  what the browser produced after parsing the HTML. It's a
+                  <strong>self-consistency check</strong>: as long as it's stable across
+                  reloads, the page you're using hasn't been tampered with mid-session.
+                  Browser DOM serialization isn't bit-identical to raw source bytes,
+                  so this runtime hash is <strong>not directly comparable</strong> to the
+                  hash <code>certutil</code> would compute on a downloaded file.
                 </p>
 
+                <h2 style="font-size:11px;margin-top:32px">Verify the CDN — the real way</h2>
+
+                <p>
+                  To verify Cloudflare Pages is serving the exact code committed to this
+                  repo, fetch the raw bytes with <code>curl</code> (bypassing any browser
+                  serialization) and compare with the file hash in the GitHub release:
+                </p>
+
+                <div class="guide-code"><span class="cm"># 1. Fetch raw HTML directly</span>
+curl -o keyvault.html https://keyvault-sidekick.pages.dev/
+
+<span class="cm"># 2. Hash it</span>
+certutil -hashfile keyvault.html SHA256     <span class="cm"># Windows</span>
+shasum -a 256 keyvault.html                 <span class="cm"># macOS / Linux</span>
+
+<span class="cm"># 3. Compare with the "File hash (raw source)" in the release notes:</span>
+<span class="cm">#    https://github.com/boblauzon/keyvault-sidekick/releases</span></div>
+
                 <div class="guide-callout">
-                  <strong>Published hashes:</strong>
-                  <code>github.com/boblauzon/keyvault-sidekick/releases</code>
-                  — every release tag lists the expected SHA-256.
+                  <strong>If the hashes match</strong> → the CDN is serving the exact
+                  code published to GitHub. You can trust it.<br>
+                  <strong>If they differ</strong> → don't enter your master password.
+                  Use the offline copy below, or <code>git clone</code> the repo.
                 </div>
 
                 <h2 style="font-size:11px;margin-top:32px">Run locally — maximum trust</h2>
@@ -2923,11 +2946,17 @@
                   <div class="guide-step">
                     <div class="guide-step-num">A</div>
                     <div class="guide-step-body">
-                      <strong>Save the page offline.</strong>
-                      Click the button below to download the exact HTML currently loaded
-                      in this tab. Or use <code>Ctrl+S</code> / <code>Cmd+S</code> in your browser.
+                      <strong>Save an offline copy.</strong>
+                      Click the button below — it downloads the HTML currently loaded
+                      in this tab so you can run the app without a network.
                       <div style="margin-top:10px">
                         <button type="button" class="primary" id="save-offline-btn">Save offline copy</button>
+                      </div>
+                      <div style="margin-top:8px;font-size:11px;color:var(--text-mute);line-height:1.5">
+                        Note: this is the <strong>browser-serialized</strong> form of the
+                        page. It runs identically but is not byte-identical to the raw
+                        source in the repo. For hash verification, use <code>curl</code>
+                        as shown above.
                       </div>
                     </div>
                   </div>
@@ -2936,42 +2965,20 @@
                     <div class="guide-step-body">
                       <strong>Open the file.</strong>
                       Double-click <code>keyvault-sidekick.html</code> — your browser
-                      will open it from <code>file://</code>. The app runs identically:
-                      same Web Crypto, same localStorage. No network involved.
+                      will open it from <code>file://</code>. Same Web Crypto, same
+                      localStorage, no network involved.
                     </div>
                   </div>
                   <div class="guide-step">
                     <div class="guide-step-num">C</div>
                     <div class="guide-step-body">
-                      <strong>(Optional) Verify the downloaded file's hash.</strong>
-                      Use your OS tools and compare against the GitHub release hash:
-                      <div class="guide-code"><span class="cm"># Windows</span>
-certutil -hashfile keyvault-sidekick.html SHA256
-
-<span class="cm"># macOS / Linux</span>
-shasum -a 256 keyvault-sidekick.html</div>
-                    </div>
-                  </div>
-                  <div class="guide-step">
-                    <div class="guide-step-num">D</div>
-                    <div class="guide-step-body">
-                      <strong>Or clone from GitHub directly</strong> for maximum auditability:
+                      <strong>Or clone from GitHub directly</strong> — most auditable:
                       <div class="guide-code">git clone https://github.com/boblauzon/keyvault-sidekick.git
 cd keyvault-sidekick
 py -3 -m http.server 8091
 <span class="cm"># open http://localhost:8091</span></div>
                     </div>
                   </div>
-                </div>
-
-                <div class="guide-warn-callout">
-                  <strong>Note on hash matching:</strong> The runtime hash above is
-                  computed from <code>document.documentElement.outerHTML</code> — what
-                  the browser actually parsed. This may differ from the raw source byte-for-byte
-                  due to whitespace and attribute normalization. We publish the
-                  <strong>runtime hash</strong> (computed the same way) in each release so
-                  the comparison works. If you OS-hash the downloaded file, compare against
-                  the <strong>file hash</strong> also published in the release notes.
                 </div>
               </div>
 
