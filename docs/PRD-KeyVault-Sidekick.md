@@ -280,6 +280,19 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
+### Phase 7 — Multi-tenant + landing page (v2.0.0) — SHIPPED 2026-06-08
+**Major architecture pivot.** From zero-backend single-file vault → invitation-only SaaS with auth gate. The vault's local-only encryption properties are preserved; the new auth layer only controls who can OPEN the app at all. Vault content STILL never touches the server.
+- Repo restructured: `public/` (static), `functions/` (Pages Functions), `migrations/`, `scripts/`, `docs/`
+- D1 database `keyvault-sidekick-db` (id `4cbb409d-4356-4007-b62f-58493498b279`) with `users` + `invitations` tables
+- Auth: email+password, PBKDF2 100k (CF Workers cap — vault crypto in app.html stays 310k browser-side), HMAC-SHA-256 session cookie, 30-day TTL, HttpOnly/Secure/SameSite=Lax
+- Invitation tokens: 32 random bytes (base64url); only SHA-256(token) stored in D1; 7-day TTL; one-time-use; admin copies one-time URL and sends out-of-band (no email service yet)
+- Generic "Invalid email or password" on login to prevent enumeration
+- Superadmin bootstrapped via `scripts/create-superadmin.mjs`; rob.lauzon@vibeprosoft.com is the first superadmin (initial pw `rMui4aCet0uk7ibj` — CHANGE ON FIRST LOGIN)
+- New static pages: `public/index.html` (marketing landing with hero / how-it-works / security model / use cases / CTA), `public/login.html`, `public/invite.html`, `public/admin.html`
+- New API routes: `/api/auth/{login,logout,me,accept-invite}`, `/api/auth/invite/[token]`, `/api/admin/users` (GET/POST), `/api/admin/users/[id]` (DELETE/PATCH), `/api/admin/invitations` (GET/POST), `/api/admin/invitations/[id]` (DELETE)
+- Vault adapted: CSP loosened from `connect-src 'none'` → `connect-src 'self'` (auth API only — vault content NEVER goes through any fetch); fragment captured BEFORE auth redirect so Claude Code prefill URL survives the round-trip through /login.html
+- End-to-end verified: login → me → admin users → admin invitations → accept-invite → new user signs in. All gated routes return 401/403 correctly without auth.
+
 ### Phase 6.1 — Vibe-code audit remediation (v1.5.2) — SHIPPED 2026-06-08
 Ran `/vibe-code-audit` against the v1.5.1 codebase. No critical/high findings. Two medium + three hygiene fixes applied as v1.5.2:
 - **VC-SEC-01 Medium — Iteration drift in `encryptAndSave`** — `VaultState` now tracks `kdfIterations`; `unlock()` + `encryptAndSave()` take iterations explicitly; `mutate()` passes through; future PBKDF2 bumps will no longer silently corrupt existing vaults
