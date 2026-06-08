@@ -184,3 +184,155 @@ export function nowISO() {
 export function unixSeconds() {
   return Math.floor(Date.now() / 1000);
 }
+
+// ── Phase 7.5: abuse protection ──────────────────────────────────────────────
+
+export const LOCKOUT_THRESHOLD = 5;             // failed attempts before lockout
+export const LOCKOUT_WINDOW_HOURS = 1;          // rolling window for failures
+export const LOCKOUT_DURATION_HOURS = 1;        // how long the account stays locked
+export const FAILED_LOGIN_RETENTION_HOURS = 24; // cleanup horizon for failed_logins rows
+
+export function getClientIP(request) {
+  return (
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
+    'unknown'
+  );
+}
+
+// Origin-based CSRF check for state-changing requests.
+// Reject if Origin is present but doesn't match request URL's origin.
+// Missing Origin is allowed (e.g. native fetch from same-origin scripts may
+// omit it depending on browser); SameSite=Lax + HttpOnly cookies still protect.
+export function checkOrigin(request) {
+  const origin = request.headers.get('Origin');
+  if (!origin) return true;
+  try {
+    const reqOrigin = new URL(request.url).origin;
+    return origin === reqOrigin;
+  } catch { return false; }
+}
+
+// Try-limit wrapper around a CF Rate Limiter binding.
+// Returns null on success, or a Response(429) to return immediately.
+export async function tryRateLimit(limiter, key, label) {
+  if (!limiter || typeof limiter.limit !== 'function') return null;
+  try {
+    const r = await limiter.limit({ key });
+    if (!r.success) {
+      return errorResponse(429, `Too many ${label || 'requests'}. Try again in a moment.`);
+    }
+  } catch {
+    // If the limiter fails, fall open — we'd rather serve the request than 500.
+  }
+  return null;
+}
+
+// ── Audit log ───────────────────────────────────────────────────────────────
+
+export async function recordAuditLog(env, { userId, email, action, details, request }) {
+  try {
+    const ip = request ? getClientIP(request) : 'unknown';
+    const ua = request ? (request.headers.get('User-Agent') || '').slice(0, 256) : null;
+    const detailsJson = details ? JSON.stringify(details) : null;
+    await env.DB.prepare(`
+      INSERT INTO audit_log (id, user_id, email, action, ip, user_agent, details, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      uuid(),
+      userId || null,
+      email ? normalizeEmail(email) : null,
+      action,
+      ip,
+      ua,
+      detailsJson,
+      nowISO()
+    ).run();
+  } catch {
+    // Best-effort — audit failures must not block the user-facing request.
+  }
+}
+
+// ── Failed-login tracking + account lockout ─────────────────────────────────
+
+// Check if an email is currently locked. Returns the unlock_at ISO string if
+// locked, or null otherwise. Also cleans up expired locks opportunistically.
+export async function getLockoutStatus(env, email) {
+  const row = await env.DB.prepare(
+    'SELECT email, unlock_at FROM locked_accounts WHERE email = ?'
+  ).bind(email).first();
+  if (!row) return null;
+  if (row.unlock_at < nowISO()) {
+    // Expired — clear it.
+    await env.DB.prepare('DELETE FROM locked_accounts WHERE email = ?').bind(email).run();
+    return null;
+  }
+  return row.unlock_at;
+}
+
+// Record a failed login. If threshold reached in the rolling window, lock the
+// account. Returns { locked: true, unlockAt } or { locked: false, attemptsLeft }.
+export async function recordFailedLogin(env, email, ip) {
+  const ts = nowISO();
+  await env.DB.prepare(`
+    INSERT INTO failed_logins (id, email, ip, failed_at) VALUES (?, ?, ?, ?)
+  `).bind(uuid(), email, ip, ts).run();
+
+  // Count failures in the rolling window
+  const windowStart = new Date(Date.now() - LOCKOUT_WINDOW_HOURS * 3600 * 1000).toISOString();
+  const { count } = await env.DB.prepare(
+    'SELECT COUNT(*) AS count FROM failed_logins WHERE email = ? AND failed_at >= ?'
+  ).bind(email, windowStart).first();
+
+  if (count >= LOCKOUT_THRESHOLD) {
+    const unlockAt = new Date(Date.now() + LOCKOUT_DURATION_HOURS * 3600 * 1000).toISOString();
+    // Upsert lock row
+    await env.DB.prepare(`
+      INSERT INTO locked_accounts (email, locked_at, unlock_at, reason)
+      VALUES (?, ?, ?, 'too_many_failed_logins')
+      ON CONFLICT(email) DO UPDATE SET
+        locked_at = excluded.locked_at,
+        unlock_at = excluded.unlock_at,
+        reason = excluded.reason
+    `).bind(email, ts, unlockAt).run();
+    return { locked: true, unlockAt };
+  }
+  return { locked: false, attemptsLeft: LOCKOUT_THRESHOLD - count };
+}
+
+// Clear failed-login tracking on success.
+export async function clearFailedLogins(env, email) {
+  await env.DB.prepare('DELETE FROM failed_logins WHERE email = ?').bind(email).run();
+  await env.DB.prepare('DELETE FROM locked_accounts WHERE email = ?').bind(email).run();
+}
+
+// ── Password strength ───────────────────────────────────────────────────────
+// Require ≥8 chars and at least 3 of 4 character classes.
+// Also reject a short list of very-common passwords.
+
+const WEAK_PASSWORDS = new Set([
+  'password', 'password1', 'password123', 'qwerty', 'qwerty123',
+  '12345678', '123456789', '1234567890', 'iloveyou', 'admin',
+  'admin123', 'letmein', 'monkey', 'football', 'baseball',
+  'master', 'superman', 'welcome', 'welcome1', 'welcome123',
+  'sunshine', 'princess', 'changeme', 'changeme123'
+]);
+
+export function checkPasswordStrength(password) {
+  if (typeof password !== 'string') return { ok: false, reason: 'Password is required.' };
+  if (password.length < 8) return { ok: false, reason: 'Password must be at least 8 characters.' };
+  if (password.length > 256) return { ok: false, reason: 'Password is too long.' };
+  if (WEAK_PASSWORDS.has(password.toLowerCase())) {
+    return { ok: false, reason: 'This password is too common. Choose a different one.' };
+  }
+  const classes = [
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /[0-9]/.test(password),
+    /[^a-zA-Z0-9]/.test(password)
+  ].filter(Boolean).length;
+  if (classes < 3) {
+    return { ok: false, reason: 'Password must contain at least 3 of: lowercase, uppercase, digits, symbols.' };
+  }
+  return { ok: true };
+}

@@ -57,6 +57,37 @@
 
     .empty-state { padding: 24px; text-align: center; color: var(--text-mute); font-size: 13px; }
 
+    /* Audit log */
+    .audit-row {
+      display: grid; grid-template-columns: 110px 130px 1fr 100px;
+      gap: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border);
+      align-items: center; font-family: var(--mono); font-size: 11px;
+    }
+    .audit-row:last-child { border-bottom: none; }
+    .audit-row .ts { color: var(--text-mute); }
+    .audit-row .action { color: var(--accent); }
+    .audit-row .action.fail { color: var(--danger); }
+    .audit-row .action.warn { color: var(--warn); }
+    .audit-row .email { overflow: hidden; text-overflow: ellipsis; }
+    .audit-row .ip { color: var(--text-mute); }
+    .audit-filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .audit-filters select, .audit-filters input {
+      font-size: 12px; padding: 5px 8px; width: auto;
+    }
+    .audit-panel {
+      max-height: 480px; overflow-y: auto;
+      background: var(--bg); border: 1px solid var(--border-strong);
+      border-radius: 4px;
+    }
+    .lockout-badge {
+      font-size: 9px; padding: 1px 5px; border-radius: 2px;
+      color: var(--warn); border: 1px solid var(--warn);
+      letter-spacing: 0.04em; text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
     .toast {
       position: fixed; bottom: 24px; right: 24px;
       background: var(--bg-elev-2); border: 1px solid var(--ok); color: var(--ok);
@@ -136,6 +167,35 @@
       </div>
 
     </div>
+
+    <div class="panel" style="margin-top: 32px;">
+      <h2 style="display: flex; justify-content: space-between; align-items: center;">
+        Audit log
+        <button type="button" id="audit-refresh" class="ghost" style="font-size: 12px;">Refresh</button>
+      </h2>
+      <div class="audit-filters">
+        <select id="audit-action-filter">
+          <option value="">All actions</option>
+          <option value="login_success">login_success</option>
+          <option value="login_failure">login_failure</option>
+          <option value="login_locked">login_locked</option>
+          <option value="logout">logout</option>
+          <option value="user_created">user_created</option>
+          <option value="user_deleted">user_deleted</option>
+          <option value="user_modified">user_modified</option>
+          <option value="invitation_created">invitation_created</option>
+          <option value="invitation_revoked">invitation_revoked</option>
+          <option value="invitation_accepted">invitation_accepted</option>
+        </select>
+        <input type="email" id="audit-email-filter" placeholder="Filter by email" style="flex: 1; min-width: 200px;">
+        <input type="text" id="audit-ip-filter" placeholder="Filter by IP" style="width: 140px;">
+        <button type="button" id="audit-apply" class="primary" style="font-size: 12px;">Apply</button>
+        <button type="button" id="audit-clear" class="ghost" style="font-size: 12px;">Clear</button>
+      </div>
+      <div id="audit-list" class="audit-panel">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
   </main>
 
   <div id="toast-root" aria-live="polite"></div>
@@ -198,8 +258,9 @@
               <div class="item-email">${escapeHtml(u.email)}
                 <span class="badge ${u.role === 'superadmin' ? 'badge-superadmin' : ''}">${u.role}</span>
                 <span class="badge badge-${escapeHtml(u.status)}">${u.status}</span>
+                ${u.locked_until ? `<span class="lockout-badge" title="Unlocks at ${escapeHtml(u.locked_until)}">LOCKED</span>` : ''}
               </div>
-              <div class="item-sub">Created ${fmtDate(u.created_at)}${u.last_login ? ' · last login ' + fmtDate(u.last_login) : ''}</div>
+              <div class="item-sub">Created ${fmtDate(u.created_at)}${u.last_login ? ' · last login ' + fmtDate(u.last_login) : ''}${u.locked_until ? ' · unlocks ' + fmtDate(u.locked_until) : ''}</div>
             </div>
             <div class="item-actions">
               ${u.id === me.id ? '<span class="badge">You</span>' : `<button type="button" class="danger" data-action="delete">Delete</button>`}
@@ -336,6 +397,66 @@
       });
       loadInvitations();
     });
+
+    // ── Audit log ──────────────────────────────────────────────────────────
+    function actionClass(action) {
+      if (action === 'login_failure' || action === 'login_locked' || action === 'user_deleted' || action === 'invitation_revoked') return 'fail';
+      if (action === 'user_modified') return 'warn';
+      return '';
+    }
+    function fmtDateTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+    async function loadAuditLog() {
+      const list = $('audit-list');
+      const params = new URLSearchParams();
+      const action = $('audit-action-filter').value.trim();
+      const email = $('audit-email-filter').value.trim();
+      const ip = $('audit-ip-filter').value.trim();
+      if (action) params.set('action', action);
+      if (email) params.set('email', email);
+      if (ip) params.set('ip', ip);
+      params.set('limit', '200');
+      try {
+        const r = await fetch('/api/admin/audit-log?' + params.toString(), { credentials: 'same-origin' });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed to load audit log.');
+        if (!data.events.length) {
+          list.innerHTML = '<div class="empty-state">No matching events.</div>';
+          return;
+        }
+        list.innerHTML = data.events.map(ev => {
+          const detailsStr = ev.details ? JSON.stringify(ev.details) : '';
+          const detailsTrunc = detailsStr.length > 80 ? detailsStr.slice(0, 80) + '…' : detailsStr;
+          return `
+            <div class="audit-row" title="${escapeHtml(detailsStr)}">
+              <span class="ts">${fmtDateTime(ev.created_at)}</span>
+              <span class="action ${actionClass(ev.action)}">${escapeHtml(ev.action)}</span>
+              <span class="email" title="${escapeHtml(ev.email || '')}">${escapeHtml(ev.email || '—')}<span style="color:var(--text-mute)"> · ${escapeHtml(detailsTrunc)}</span></span>
+              <span class="ip">${escapeHtml(ev.ip)}</span>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+    $('audit-apply').addEventListener('click', loadAuditLog);
+    $('audit-refresh').addEventListener('click', loadAuditLog);
+    $('audit-clear').addEventListener('click', () => {
+      $('audit-action-filter').value = '';
+      $('audit-email-filter').value = '';
+      $('audit-ip-filter').value = '';
+      loadAuditLog();
+    });
+
+    // After main init, also load audit log
+    const _origLoadUsers = loadUsers;
+    loadUsers = async () => { await _origLoadUsers(); loadAuditLog(); };
 
     // ── Logout ──────────────────────────────────────────────────────────────
     $('logout-btn').addEventListener('click', async () => {

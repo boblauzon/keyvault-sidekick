@@ -1,20 +1,22 @@
 import {
   PBKDF2_ITERATIONS,
-  bytesToBase64Url, errorResponse, hashPassword, isValidEmail, json,
-  normalizeEmail, nowISO, randomBytes, uuid
+  bytesToBase64Url, checkPasswordStrength, errorResponse, hashPassword,
+  isValidEmail, json, normalizeEmail, nowISO, randomBytes, recordAuditLog, uuid
 } from '../../../_lib.js';
 
-// GET /api/admin/users → list all users (no password material)
+// GET /api/admin/users
 export const onRequestGet = async ({ env }) => {
   const { results } = await env.DB.prepare(`
-    SELECT id, email, role, status, created_at, last_login, created_by
-    FROM users ORDER BY created_at DESC
-  `).all();
+    SELECT u.id, u.email, u.role, u.status, u.created_at, u.last_login, u.created_by,
+           la.unlock_at AS locked_until
+    FROM users u
+    LEFT JOIN locked_accounts la ON la.email = u.email AND la.unlock_at > ?
+    ORDER BY u.created_at DESC
+  `).bind(nowISO()).all();
   return json({ users: results });
 };
 
-// POST /api/admin/users → create user with initial password
-// body: { email, password, role? }
+// POST /api/admin/users
 export const onRequestPost = async ({ request, env, data }) => {
   let body;
   try { body = await request.json(); }
@@ -25,7 +27,8 @@ export const onRequestPost = async ({ request, env, data }) => {
   const role = body.role === 'superadmin' ? 'superadmin' : 'user';
 
   if (!isValidEmail(email)) return errorResponse(400, 'Email address is invalid.');
-  if (password.length < 8) return errorResponse(400, 'Password must be at least 8 characters.');
+  const strength = checkPasswordStrength(password);
+  if (!strength.ok) return errorResponse(400, strength.reason);
 
   const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?')
     .bind(email).first();
@@ -44,6 +47,12 @@ export const onRequestPost = async ({ request, env, data }) => {
     bytesToBase64Url(hash), bytesToBase64Url(salt), PBKDF2_ITERATIONS,
     role, ts, data.user.id
   ).run();
+
+  await recordAuditLog(env, {
+    userId: data.user.id, email: data.user.email,
+    action: 'user_created', request,
+    details: { new_user_id: userId, new_user_email: email, role }
+  });
 
   return json({
     user: { id: userId, email, role, status: 'active', created_at: ts }
