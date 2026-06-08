@@ -87,6 +87,42 @@ http://localhost:8091/#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_x
 - **CSP.** `connect-src 'none'` — no outbound network requests from the page.
 - **No telemetry.** Zero analytics, zero tracking.
 - **PBKDF2 parameters stored in blob.** Forward-compatible: future iteration increases don't break existing vaults.
+- **Integrity verification.** Every release publishes the SHA-256 hash of `index.html`. The app shows a runtime hash in the footer + Guide → Integrity section. Mismatch = possible CDN compromise.
+
+## Threat model
+
+| Threat | Protected? | Mechanism |
+|---|---|---|
+| Cloudflare Pages stores your vault | ✅ Impossible | There is no backend; CF only serves a static HTML file |
+| Another visitor sees your vault | ✅ Impossible | Each browser's `localStorage` is isolated; nothing is synced |
+| Network intercept reads your vault | ✅ Protected | TLS to CF + `connect-src 'none'` blocks all outbound JS requests |
+| Stolen encrypted blob (e.g. backup `.vault` file) | ✅ Protected | AES-256-GCM + PBKDF2 310k iters — strong master password required to crack |
+| Browser extension reading DOM after unlock | ⚠️ Not protected | Outside the app's control; use a dedicated browser profile for high-sensitivity vaults |
+| **Compromised CF Pages CDN pushes modified HTML** | ⚠️ Detectable | Compare runtime hash with GitHub release hash; or run locally from `file://` |
+| Forgotten master password | ⚠️ No recovery by design | Export `.vault` backup and keep it safe |
+
+## Verifying integrity
+
+For maximum trust, verify the hosted version matches the published release:
+
+1. Open https://keyvault-sidekick.pages.dev
+2. Click the **`?`** button in the topbar
+3. Scroll to **Integrity verification**
+4. Compare the SHA-256 shown with the **runtime hash** in the matching [GitHub release](https://github.com/boblauzon/keyvault-sidekick/releases)
+5. Match → CDN is serving the published code. Mismatch → **don't enter your master password**, run locally instead.
+
+## Running locally
+
+For zero CDN trust:
+
+```bash
+git clone https://github.com/boblauzon/keyvault-sidekick.git
+cd keyvault-sidekick
+py -3 -m http.server 8091
+# open http://localhost:8091
+```
+
+Or save the page offline (Guide → Integrity → **Save offline copy**) and double-click the saved `keyvault-sidekick.html` — it runs from `file://` with identical behavior.
 
 ---
 
@@ -110,6 +146,7 @@ http://localhost:8091/#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_x
 | 3 — Generators (7 types, save-to-project) | ✅ Shipped |
 | 4 — Export, settings, auto-lock, .vault backup, prefill hook | ✅ Shipped |
 | 5 — GitHub + CF Pages deploy | ✅ Shipped |
+| 6 — Integrity verification + offline-first polish | ✅ Shipped |
 
 ---
 

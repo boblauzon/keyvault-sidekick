@@ -280,15 +280,20 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
-### Phase 6 — Integrity verification + offline-first polish (Week 6)
-- [ ] SHA-256 hash of loaded HTML computed at page-load time (before any DOM mutation), shown in app footer
-- [ ] Integrity section in Guide screen — runtime hash + Copy button + link to GitHub releases + instructions to compare
-- [ ] "Save offline copy" button — downloads exact HTML loaded in tab (using `__initialHTML` cache, no fetch needed → CSP safe)
-- [ ] "Run locally" guide section — Ctrl+S, double-click `index.html` (works from `file://`), or `git clone` + Python http.server
-- [ ] OS-level hash verification instructions (`certutil` on Windows, `shasum -a 256` on macOS/Linux)
-- [ ] GitHub release published with expected SHA-256 of `index.html` (as the browser serializes it via `outerHTML`)
-- [ ] README updated with verification flow + threat model section
-- Goal: address the single remaining attack vector vs desktop apps — supply-chain on the hosted HTML
+### Phase 6 — Integrity verification + offline-first polish (Week 6) — SHIPPED 2026-06-08
+- [x] SHA-256 hash of loaded HTML computed at script start via `document.documentElement.outerHTML` + `crypto.subtle.digest` (CSP-safe — no fetch)
+- [x] App footer with truncated hash (first 12 chars + ellipsis) + full hash in tooltip + "Verify ↗" link that opens Guide → Integrity section
+- [x] Guide → Integrity section: full SHA-256 + Copy hash button + threat-model explanation (CDN compromise scenario)
+- [x] "Save offline copy" button — downloads exact `__initialHTML` captured at script boot; opens correctly via `text/html;charset=utf-8` MIME
+- [x] 4-step Run-Locally guide: Save offline → Open from `file://` → OS-level hash verification (`certutil` Win / `shasum -a 256` macOS+Linux) → git clone fallback
+- [x] Warn callout in Guide explaining outerHTML serialization vs raw source byte-for-byte
+- [x] `downloadText` upgraded with extension-based MIME detection (`html` / `json` / `vault` / fallback `text/plain`)
+- [x] GitHub release v1.5.0 published with BOTH hashes:
+  - File hash (raw `index.html`): `00ae0ac412960ca66365cb50c50d787e5a0c83981a0019e0ac47a061719eb1ee`
+  - Runtime hash (browser-parsed outerHTML): `e98670b2a38a3116715a0e3da70aa75c366d76d96a1dcd144c019e904fe76cc9`
+- [x] README updated with Threat model table, Verifying integrity walkthrough, Running locally section
+- [x] Deployed to CF Pages — verified that CF serves the file byte-for-byte (deployed file hash = local file hash)
+- Closed the single remaining attack vector vs desktop apps: supply-chain on the hosted HTML
 
 ### Phase 5 — Shipping (Week 5) — SHIPPED 2026-06-08
 - [x] GitHub repo at https://github.com/boblauzon/keyvault-sidekick (private; 4 files: index.html + README.md + PRD + .gitignore; commit `ee0505c`)
