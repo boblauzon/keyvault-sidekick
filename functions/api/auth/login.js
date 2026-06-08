@@ -35,7 +35,7 @@ export const onRequestPost = async ({ request, env }) => {
   }
 
   const row = await env.DB.prepare(
-    'SELECT id, email, password_hash, salt, iterations, role, status FROM users WHERE email = ?'
+    'SELECT id, email, password_hash, salt, iterations, role, status, session_version FROM users WHERE email = ?'
   ).bind(email).first();
 
   // Generic error to avoid email enumeration.
@@ -66,7 +66,10 @@ export const onRequestPost = async ({ request, env }) => {
   });
 
   const exp = unixSeconds() + SESSION_TTL_SECONDS;
-  const token = await signSession({ uid: row.id, role: row.role, exp }, env.SESSION_SECRET);
+  const token = await signSession(
+    { uid: row.id, role: row.role, sv: Number(row.session_version || 0), exp },
+    env.SESSION_SECRET
+  );
 
   return json(
     { ok: true, user: { id: row.id, email: row.email, role: row.role } },

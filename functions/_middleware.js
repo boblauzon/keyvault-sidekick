@@ -10,19 +10,23 @@ export const onRequest = async (context) => {
   // Default: no user attached.
   data.user = null;
 
-  // Health check / static asset paths skip auth entirely.
-  // (Static assets are served by Pages assets binding, never hit this code.)
   try {
     const cookieHeader = request.headers.get('Cookie') || '';
     const token = parseSessionCookie(cookieHeader);
     if (token) {
       const payload = await verifySession(token, env.SESSION_SECRET);
       if (payload) {
-        // Optionally look up user to confirm status is still 'active'.
         const row = await env.DB.prepare(
-          'SELECT id, email, role, status FROM users WHERE id = ?'
+          'SELECT id, email, role, status, session_version FROM users WHERE id = ?'
         ).bind(payload.uid).first();
-        if (row && row.status === 'active') {
+        if (
+          row &&
+          row.status === 'active' &&
+          // Session-version check: rejects tokens issued before a password
+          // change / disable / role change. payload.sv defaults to 0 for
+          // backwards-compat with tokens issued before this field existed.
+          (Number(payload.sv || 0) === Number(row.session_version || 0))
+        ) {
           data.user = { id: row.id, email: row.email, role: row.role };
         }
       }

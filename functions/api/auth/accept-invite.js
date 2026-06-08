@@ -64,8 +64,12 @@ export const onRequestPost = async ({ request, env }) => {
     details: { invitation_id: invite.id, role: invite.role }
   });
 
+  // New user → session_version starts at 0 by default.
   const exp = unixSeconds() + SESSION_TTL_SECONDS;
-  const sessionToken = await signSession({ uid: userId, role: invite.role, exp }, env.SESSION_SECRET);
+  const sessionToken = await signSession(
+    { uid: userId, role: invite.role, sv: 0, exp },
+    env.SESSION_SECRET
+  );
 
   return json(
     { ok: true, user: { id: userId, email: invite.email, role: invite.role } },

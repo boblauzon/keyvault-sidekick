@@ -93,14 +93,16 @@
       padding: 3px 8px; border-radius: 3px;
       border: 1px solid var(--border-strong); color: var(--text-dim);
       display: inline-flex; gap: 8px; align-items: center;
-      max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      text-decoration: none; cursor: pointer;
+      transition: border-color 0.1s ease, color 0.1s ease;
     }
+    .user-pill:hover { color: var(--text); border-color: var(--accent-dim); text-decoration: none; }
     .user-pill-admin {
       font-size: 9px; padding: 1px 5px; border-radius: 2px;
       background: rgba(192,132,252,0.1); color: var(--purple); border: 1px solid var(--purple);
-      text-decoration: none; letter-spacing: 0.05em;
+      letter-spacing: 0.05em;
     }
-    .user-pill-admin:hover { background: rgba(192,132,252,0.18); text-decoration: none; }
 
     main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 32px 20px 80px; }
 
@@ -1206,10 +1208,10 @@
       function setStatusChip(state) {
         // User pill (right of everything) — shown whenever auth is known
         const userPill = __currentUser ? `
-          <span class="user-pill" title="${escapeHtml(__currentUser.email)}">
+          <a href="/account.html" class="user-pill" title="Account settings — ${escapeHtml(__currentUser.email)}">
             ${escapeHtml(__currentUser.email)}
-            ${__currentUser.role === 'superadmin' ? '<a href="/admin.html" class="user-pill-admin">ADMIN</a>' : ''}
-          </span>
+            ${__currentUser.role === 'superadmin' ? '<span class="user-pill-admin">ADMIN</span>' : ''}
+          </a>
           <button type="button" id="btn-signout" class="btn-help" title="Sign out" aria-label="Sign out">⏻</button>
         ` : '';
 
