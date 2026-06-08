@@ -280,11 +280,11 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
-### Phase 5 — Shipping (Week 5)
-- [ ] GitHub repo (private → public once deployed) at boblauzon/keyvault-sidekick
-- [ ] README + MCP integration guide (URL prefill usage from Claude Code)
-- [ ] Cloudflare Pages deploy (static site, no build step)
-- [ ] Landing page (optional — can use VibeProSoft Hub)
+### Phase 5 — Shipping (Week 5) — SHIPPED 2026-06-08
+- [x] GitHub repo at https://github.com/boblauzon/keyvault-sidekick (private; 4 files: index.html + README.md + PRD + .gitignore; commit `ee0505c`)
+- [x] README.md — stack overview, run locally, Claude Code MCP prefill integration guide (URL format, params table, security model, end-to-end example), build plan status table
+- [x] Cloudflare Pages deploy — `keyvault-sidekick` project, branch `main`, live at https://keyvault-sidekick.pages.dev (200 OK verified from CF edge; 4 assets uploaded)
+- [ ] Landing page — deferred; will use VibeProSoft Hub catalog entry
 
 ---
 
