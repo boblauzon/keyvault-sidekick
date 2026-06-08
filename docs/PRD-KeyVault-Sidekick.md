@@ -280,6 +280,14 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
+### Phase 7.6 — Account settings + change password (v2.0.2) — SHIPPED 2026-06-08
+Closes the Phase 7 polish gap: signed-in users can now change their own login password.
+- **New endpoint**: POST /api/auth/change-password — verifies current pw, enforces strength, re-encrypts, bumps session_version, re-issues caller a fresh cookie, rate-limited, CSRF-checked, audit-logged
+- **Session versioning** (migration 0003): `session_version` column on users + `sv` claim in session cookie payload + middleware compares JWT sv to DB and rejects stale tokens. Backwards-compatible: missing sv treated as 0.
+- **New page**: `/account.html` — account info card + change-password form with live 4-bar strength meter + live requirements checklist + warning about other-device sign-out
+- **Linked from**: vault topbar (user pill is now a link), admin topbar (Account button)
+- End-to-end verified: change pw from device 1 → device 2 immediately gets "Not authenticated" on next request; audit log captures `password_changed` with `session_version: 1`.
+
 ### Phase 7.5 — Abuse protection (v2.0.1) — SHIPPED 2026-06-08
 Clarification from user: the reason for user management was specifically to enable abuse controls. User mgmt alone gates WHO can access — this layer adds rate limits, lockout, audit, CSRF, password strength.
 - **Rate limiting** via `[[rate_limiting]]` Pages bindings: LOGIN_LIMITER (5/60s/IP), INVITE_LIMITER (10/60s/IP), ADMIN_LIMITER (30/10s/session). All return 429 on exceedance.
