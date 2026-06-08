@@ -475,6 +475,69 @@
     .gen-output-row .gen-output { flex: 1; }
     .gen-help { color: var(--text-mute); font-size: 12px; line-height: 1.5; margin: 0 0 16px 0; }
 
+    /* Guide / help screen */
+    .guide-layout { display: flex; flex-direction: column; gap: 0; max-width: 720px; }
+    .guide-section { margin-bottom: 40px; }
+    .guide-section > h2 {
+      font-size: 11px; font-family: var(--mono); text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--accent);
+      margin: 0 0 16px 0; border-bottom: 1px solid var(--accent-dim); padding-bottom: 8px;
+    }
+    .guide-section p { margin: 0 0 12px 0; color: var(--text-dim); font-size: 13px; line-height: 1.65; }
+    .guide-section strong { color: var(--text); }
+    .guide-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .guide-step { display: flex; gap: 14px; align-items: flex-start; }
+    .guide-step-num {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent-dim); color: var(--accent);
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .guide-step-body { font-size: 13px; color: var(--text-dim); line-height: 1.6; padding-top: 3px; }
+    .guide-step-body strong { color: var(--text); }
+    .guide-code {
+      background: var(--bg); border: 1px solid var(--border-strong); border-radius: 4px;
+      padding: 12px 14px; font-family: var(--mono); font-size: 12px;
+      color: var(--text); line-height: 1.6; overflow-x: auto;
+      margin: 8px 0; white-space: pre-wrap; word-break: break-all;
+    }
+    .guide-code .kw { color: var(--accent); }
+    .guide-code .cm { color: var(--text-mute); }
+    .guide-props { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+    .guide-prop { display: flex; gap: 12px; align-items: baseline; }
+    .guide-prop-name {
+      font-family: var(--mono); font-size: 12px; color: var(--accent);
+      background: rgba(45,212,191,0.07); border: 1px solid var(--accent-dim);
+      border-radius: 3px; padding: 1px 7px; flex-shrink: 0; min-width: 80px; text-align: center;
+    }
+    .guide-prop-req { font-size: 10px; font-family: var(--mono); color: var(--warn); flex-shrink: 0; }
+    .guide-prop-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+    .guide-prop-desc code { color: var(--text); background: var(--bg-elev-2); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+    .sec-props { display: flex; flex-direction: column; gap: 14px; }
+    .sec-prop { display: flex; gap: 14px; align-items: flex-start; }
+    .sec-prop-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .sec-prop-body { display: flex; flex-direction: column; gap: 3px; }
+    .sec-prop-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .sec-prop-detail { font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+    .sec-prop-detail code { color: var(--accent); background: var(--bg-elev-2); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+    .guide-callout {
+      padding: 12px 16px; background: rgba(45,212,191,0.05);
+      border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0;
+      font-size: 12px; color: var(--text-dim); line-height: 1.6; margin: 12px 0;
+    }
+    .guide-callout strong { color: var(--text); }
+    .guide-warn-callout {
+      padding: 12px 16px; background: rgba(251,191,36,0.05);
+      border-left: 3px solid var(--warn); border-radius: 0 4px 4px 0;
+      font-size: 12px; color: var(--text-dim); line-height: 1.6; margin: 12px 0;
+    }
+    .btn-help {
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-dim); font-size: 14px; font-weight: 600;
+      padding: 4px 8px; border-radius: 4px; line-height: 1;
+    }
+    .btn-help:hover:not(:disabled) { color: var(--text); background: var(--bg-elev-2); border-color: var(--border-strong); }
+
     /* Export screen */
     .export-key-list {
       display: flex; flex-direction: column; gap: 2px;
@@ -1000,11 +1063,13 @@
         } else if (state === 'unlocked') {
           topbarActionsEl.innerHTML = `
             <span class="status-chip unlocked">Unlocked</span>
+            <button type="button" id="btn-help" class="btn-help" title="Claude Code integration & security guide" aria-label="Help">?</button>
             <button type="button" id="btn-settings" class="btn-settings-gear" title="Settings" aria-label="Settings">⚙</button>
             <button type="button" id="btn-lock">Lock</button>
           `;
           document.getElementById('btn-lock').addEventListener('click', lock);
           document.getElementById('btn-settings').addEventListener('click', () => navigate('settings'));
+          document.getElementById('btn-help').addEventListener('click', () => navigate('guide'));
         } else {
           topbarActionsEl.innerHTML = '';
         }
@@ -1058,6 +1123,8 @@
           showExport();
         } else if (currentView === 'settings') {
           showSettings();
+        } else if (currentView === 'guide') {
+          showGuide();
         } else {
           showProjects();
         }
@@ -2436,6 +2503,284 @@
           downloadText(content, `${safeName}.${ext}`);
           showToast('File downloaded');
         });
+      }
+
+      // ── Guide / help screen ───────────────────────────────────────────────────
+      function showGuide() {
+        setStatusChip('unlocked');
+        mainEl.innerHTML = `
+          <div class="screen">
+            <div class="screen-header">
+              <div>
+                <h1>Guide</h1>
+                <p class="meta">Claude Code integration and security overview.</p>
+              </div>
+            </div>
+            <div class="guide-layout">
+
+              <!-- ── CLAUDE CODE INTEGRATION ───────────────────────────────── -->
+              <div class="guide-section">
+                <h2>Claude Code integration</h2>
+
+                <p>
+                  KeyVault Sidekick can receive keys that Claude creates via MCP tools (Stripe,
+                  Cloudflare, Clerk, etc.) — without you ever seeing the raw value in chat.
+                  Claude embeds the key in a URL fragment and navigates your browser to the vault,
+                  which auto-opens a pre-filled "Save key" modal.
+                </p>
+
+                <div class="guide-callout">
+                  <strong>Prerequisite:</strong> The vault must be running — either at
+                  <code>http://localhost:8091</code> (local) or
+                  <code>https://keyvault-sidekick.pages.dev</code> (hosted).
+                  Tell Claude which URL you're using.
+                </div>
+
+                <div class="guide-steps">
+                  <div class="guide-step">
+                    <div class="guide-step-num">1</div>
+                    <div class="guide-step-body">
+                      <strong>Ask Claude to create and save a key.</strong><br>
+                      Example prompts:
+                      <div class="guide-code"><span class="cm"># Stripe</span>
+"Create a Stripe restricted API key for ITIL Sidekick and save it to
+ my KeyVault at http://localhost:8091 in a project called ITIL Sidekick"
+
+<span class="cm"># Cloudflare</span>
+"Create a Cloudflare API token scoped to the ct-sidekick.com zone
+ and prefill it into my KeyVault project 'CT Sidekick'"
+
+<span class="cm"># Any secret value</span>
+"Generate a 256-bit JWT signing secret and save it to KeyVault as
+ JWT_SECRET in project 'ITIL Sidekick'"</div>
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">2</div>
+                    <div class="guide-step-body">
+                      <strong>Claude navigates your browser to the vault URL.</strong><br>
+                      The key value is embedded in the URL fragment (the <code>#...</code> part),
+                      which is never transmitted to the server:
+                      <div class="guide-code"><span class="kw">http://localhost:8091/</span>#action=prefill
+  &amp;name=STRIPE_RESTRICTED_KEY
+  &amp;value=rk_live_51abc…
+  &amp;type=api_key
+  &amp;project=ITIL+Sidekick
+  &amp;notes=Charges+only%2C+no+refunds</div>
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">3</div>
+                    <div class="guide-step-body">
+                      <strong>The vault strips the fragment and stores the data locally.</strong><br>
+                      The key value is moved to <code>sessionStorage</code> and the URL is
+                      cleaned via <code>history.replaceState</code> — it disappears from the
+                      browser bar immediately.
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">4</div>
+                    <div class="guide-step-body">
+                      <strong>Unlock the vault</strong> (if locked) with your master password.<br>
+                      The <strong>⚡ Save key from Claude</strong> modal opens automatically
+                      with all fields pre-filled. If the vault was already unlocked, the modal
+                      opens immediately.
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">5</div>
+                    <div class="guide-step-body">
+                      <strong>Review and click Save key.</strong><br>
+                      The key is encrypted and saved to your vault. The
+                      <code>sessionStorage</code> entry is cleared — the value no longer
+                      exists anywhere outside your encrypted vault.
+                    </div>
+                  </div>
+                </div>
+
+                <h2 style="font-size:11px;margin-top:24px">URL parameters</h2>
+                <div class="guide-props">
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">action</span>
+                    <span class="guide-prop-req">required</span>
+                    <span class="guide-prop-desc">Must be <code>prefill</code>.</span>
+                  </div>
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">name</span>
+                    <span class="guide-prop-req">required</span>
+                    <span class="guide-prop-desc">Key name, e.g. <code>STRIPE_API_KEY</code>.</span>
+                  </div>
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">value</span>
+                    <span class="guide-prop-req">required</span>
+                    <span class="guide-prop-desc">The secret value.</span>
+                  </div>
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">type</span>
+                    <span class="guide-prop-req" style="color:var(--text-mute)">optional</span>
+                    <span class="guide-prop-desc"><code>api_key</code> / <code>secret</code> / <code>token</code> / <code>oauth</code> / <code>webhook</code> / <code>other</code>. Default: <code>api_key</code>.</span>
+                  </div>
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">project</span>
+                    <span class="guide-prop-req" style="color:var(--text-mute)">optional</span>
+                    <span class="guide-prop-desc">Project name or ID. Fuzzy-matched: exact ID → exact name → partial name → first project.</span>
+                  </div>
+                  <div class="guide-prop">
+                    <span class="guide-prop-name">notes</span>
+                    <span class="guide-prop-req" style="color:var(--text-mute)">optional</span>
+                    <span class="guide-prop-desc">Free-text notes, URL-encoded.</span>
+                  </div>
+                </div>
+
+                <div class="guide-warn-callout">
+                  <strong>If you close the tab before unlocking:</strong> the key stored in
+                  <code>sessionStorage</code> is gone — sessionStorage does not survive tab
+                  close. Ask Claude to regenerate the key and resend the prefill URL.
+                </div>
+              </div>
+
+              <!-- ── SECURITY ───────────────────────────────────────────────── -->
+              <div class="guide-section">
+                <h2>Security model</h2>
+
+                <p>
+                  KeyVault Sidekick is designed so that a server breach, a network intercept,
+                  or a compromised CDN cannot expose your secrets. Here's exactly how each
+                  layer works.
+                </p>
+
+                <div class="sec-props">
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">🔐</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">AES-256-GCM encryption at rest</div>
+                      <div class="sec-prop-detail">
+                        Every vault save encrypts the entire JSON payload with AES-256-GCM
+                        using a fresh random 12-byte IV. The <code>localStorage</code> entry
+                        is pure ciphertext — key names and values are never written in plaintext.
+                        GCM mode also provides authentication, so a tampered blob will fail
+                        to decrypt rather than silently returning garbage.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">🔑</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">Master password — never stored, never transmitted</div>
+                      <div class="sec-prop-detail">
+                        Your password is run through <strong>PBKDF2 (310,000 iterations,
+                        SHA-256, random 16-byte salt)</strong> to derive the AES key.
+                        The derived key lives in JS memory only — it is never written to
+                        disk in any form. The password itself is also never stored.
+                        310,000 iterations is the OWASP 2024 recommendation; it makes
+                        brute-force attacks on a stolen blob computationally expensive.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">🔗</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">URL fragment security (prefill hook)</div>
+                      <div class="sec-prop-detail">
+                        The <code>#fragment</code> portion of a URL is a browser-only
+                        construct — it is <strong>never sent to the HTTP server</strong> in
+                        any request. Whether you use the local server or
+                        <code>keyvault-sidekick.pages.dev</code>, the secret value in
+                        <code>#…&amp;value=sk_live_xxx</code> never leaves your browser.
+                        The fragment is also stripped from the URL bar immediately
+                        (<code>history.replaceState</code>) and the value moves to
+                        <code>sessionStorage</code>, which is tab-local and not written
+                        to disk by the browser.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">🚫</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">No outbound network requests — ever</div>
+                      <div class="sec-prop-detail">
+                        The Content Security Policy enforces <code>connect-src 'none'</code>,
+                        which means the page cannot make any HTTP requests, WebSocket
+                        connections, or fetch calls — even to the same origin. There are
+                        no analytics, no error reporting, no fonts loaded from CDNs,
+                        no external scripts. The app works fully offline after the first
+                        page load.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">📋</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">Clipboard auto-clear</div>
+                      <div class="sec-prop-detail">
+                        After you copy a key value, the clipboard is automatically
+                        cleared after your configured delay (default 30 seconds).
+                        The clear is conditional — it reads the clipboard first and only
+                        wipes it if it still contains your copied value, so it won't
+                        clobber something you copied from another app.
+                        Configurable in Settings, or disable it entirely.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">⏱</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">Auto-lock on idle</div>
+                      <div class="sec-prop-detail">
+                        The vault locks automatically after a configurable period of
+                        inactivity (default 15 minutes). Locking clears the derived
+                        AES key from memory — the vault cannot be read without
+                        re-entering your master password. Also locks if the vault
+                        is modified in another browser tab.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">⏩</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">Forward-compatible KDF</div>
+                      <div class="sec-prop-detail">
+                        The PBKDF2 parameters (iterations, hash algorithm, salt) are
+                        stored inside the encrypted blob and read back at unlock time —
+                        they are not hardcoded in the app. This means a future
+                        iteration-count increase will not silently break vaults created
+                        with the current parameters. Old vaults will still unlock
+                        correctly; new vaults will use the updated parameters.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">🔍</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">Single-file, auditable source</div>
+                      <div class="sec-prop-detail">
+                        The entire application is one <code>index.html</code> file (~2300 lines).
+                        No minification, no obfuscation, no build step, no bundled
+                        dependencies. You can read the full source with browser View Source
+                        right now. The source is also on GitHub at
+                        <strong>github.com/boblauzon/keyvault-sidekick</strong>.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sec-prop">
+                    <div class="sec-prop-icon">⚠️</div>
+                    <div class="sec-prop-body">
+                      <div class="sec-prop-title">No password recovery — by design</div>
+                      <div class="sec-prop-detail">
+                        There is no "forgot password" flow, no recovery email, no
+                        support channel that can unlock your vault. If you lose your
+                        master password, the vault is permanently inaccessible.
+                        Export a <code>.vault</code> file backup (Settings → Vault backup)
+                        and keep it somewhere safe alongside a record of your master password.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
       }
 
       // ── Settings screen ───────────────────────────────────────────────────────
