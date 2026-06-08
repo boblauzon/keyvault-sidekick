@@ -158,6 +158,7 @@ Or save the page offline (Guide → Integrity → **Save offline copy**) and dou
 | 4 — Export, settings, auto-lock, .vault backup, prefill hook | ✅ Shipped |
 | 5 — GitHub + CF Pages deploy | ✅ Shipped |
 | 6 — Integrity verification + offline-first polish | ✅ Shipped |
+| 6.1 — Vibe-code audit remediation (v1.5.2) | ✅ Shipped |
 
 ---
 
