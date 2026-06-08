@@ -475,6 +475,48 @@
     .gen-output-row .gen-output { flex: 1; }
     .gen-help { color: var(--text-mute); font-size: 12px; line-height: 1.5; margin: 0 0 16px 0; }
 
+    /* App footer (integrity badge) */
+    .appfoot {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 20px;
+      background: var(--bg-elev);
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-mute);
+      letter-spacing: 0.04em;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .appfoot-item { display: flex; gap: 8px; align-items: center; min-width: 0; }
+    .appfoot-label { letter-spacing: 0.08em; text-transform: uppercase; }
+    .appfoot-hash { color: var(--accent); overflow: hidden; text-overflow: ellipsis; }
+    .appfoot-link {
+      color: var(--text-dim); cursor: pointer; text-decoration: none;
+      background: none; border: none; padding: 0; font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .appfoot-link:hover { color: var(--accent); }
+    .appfoot-version { color: var(--text-mute); }
+
+    /* Integrity panel (in Guide) */
+    .integrity-panel {
+      background: var(--bg); border: 1px solid var(--accent-dim);
+      border-radius: 4px; padding: 16px; margin: 16px 0;
+    }
+    .integrity-row {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .integrity-label {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0;
+    }
+    .integrity-hash-full {
+      font-family: var(--mono); font-size: 12px; color: var(--accent);
+      background: var(--bg-elev-2); padding: 6px 10px; border-radius: 3px;
+      word-break: break-all; flex: 1; min-width: 200px; line-height: 1.4;
+    }
+
     /* Guide / help screen */
     .guide-layout { display: flex; flex-direction: column; gap: 0; max-width: 720px; }
     .guide-section { margin-bottom: 40px; }
@@ -615,12 +657,35 @@
       <div class="topbar-actions" id="topbar-actions"></div>
     </header>
     <main id="main"></main>
+    <footer class="appfoot" id="appfoot">
+      <span class="appfoot-item">
+        <span class="appfoot-label">Integrity</span>
+        <code class="appfoot-hash" id="integrity-hash">computing…</code>
+      </span>
+      <span class="appfoot-item">
+        <button type="button" class="appfoot-link" id="appfoot-verify">Verify ↗</button>
+        <span class="appfoot-version">v1.5 · Phase 6</span>
+      </span>
+    </footer>
   </div>
   <div id="modal-root"></div>
   <div id="toast-root" aria-live="polite" aria-atomic="false"></div>
 
   <script>
     'use strict';
+
+    // ── Integrity capture ─────────────────────────────────────────────────────
+    // Captured at script start, BEFORE any DOM mutation. Used for:
+    //   1. Computing SHA-256 of the HTML the user actually loaded (for CDN
+    //      tamper detection — compare with hash published in GitHub release)
+    //   2. "Save offline copy" download (no fetch needed → CSP-compliant)
+    const __initialHTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const __integrityHashPromise = (async () => {
+      try {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(__initialHTML));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch { return null; }
+    })();
 
     const VaultCrypto = (() => {
       const PBKDF2_ITERATIONS = 310000;
@@ -2252,6 +2317,8 @@
       function showFatal(message) {
         topbarActionsEl.innerHTML = '';
         topnavEl.innerHTML = '';
+        const footEl = document.getElementById('appfoot');
+        if (footEl) footEl.style.display = 'none';
         mainEl.innerHTML = `
           <div class="fatal">
             <h1>Cannot start</h1>
@@ -2268,6 +2335,33 @@
         if (!crypto.randomUUID) {
           showFatal('crypto.randomUUID is not available. Use a recent browser.');
           return;
+        }
+
+        // Integrity footer: populate hash + wire Verify link
+        __integrityHashPromise.then(hash => {
+          const el = document.getElementById('integrity-hash');
+          if (!el) return;
+          if (hash) {
+            el.textContent = hash.slice(0, 12) + '…';
+            el.title = hash;
+          } else {
+            el.textContent = 'unavailable';
+            el.style.color = 'var(--text-mute)';
+          }
+        });
+        const verifyBtn = document.getElementById('appfoot-verify');
+        if (verifyBtn) {
+          verifyBtn.addEventListener('click', () => {
+            if (!VaultState.isLocked()) {
+              navigate('guide');
+              setTimeout(() => {
+                const sec = document.getElementById('integrity-section');
+                if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            } else {
+              showToast('Unlock the vault to view the integrity guide', 'err');
+            }
+          });
         }
         try {
           const probe = '__kvs_probe__';
@@ -2339,7 +2433,11 @@
 
       // ── Helpers ───────────────────────────────────────────────────────────────
       function downloadText(content, filename) {
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const ext = (filename.split('.').pop() || '').toLowerCase();
+        const mime = ext === 'html' ? 'text/html;charset=utf-8'
+                   : ext === 'json' || ext === 'vault' ? 'application/json;charset=utf-8'
+                   : 'text/plain;charset=utf-8';
+        const blob = new Blob([content], { type: mime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = filename; a.style.display = 'none';
@@ -2778,9 +2876,142 @@
                 </div>
               </div>
 
+              <!-- ── INTEGRITY VERIFICATION ─────────────────────────────────── -->
+              <div class="guide-section" id="integrity-section">
+                <h2>Integrity verification</h2>
+
+                <p>
+                  The hosted version at <code>keyvault-sidekick.pages.dev</code> is served by
+                  Cloudflare Pages. The single risk this hosting model carries is
+                  <strong>supply-chain compromise</strong>: if our Cloudflare account were
+                  ever taken over, an attacker could push a modified <code>index.html</code>
+                  that exfiltrates your vault after you unlock. Here's how to detect that —
+                  and, if you want zero CDN trust, how to run KeyVault Sidekick from your own
+                  machine instead.
+                </p>
+
+                <h2 style="font-size:11px;margin-top:24px">This page's hash</h2>
+
+                <div class="integrity-panel">
+                  <div class="integrity-row">
+                    <div class="integrity-label">SHA-256:</div>
+                    <code class="integrity-hash-full" id="guide-integrity-hash">computing…</code>
+                    <button type="button" id="copy-integrity-hash">Copy hash</button>
+                  </div>
+                </div>
+
+                <p>
+                  Compare this hash with the one we publish in each GitHub release.
+                  If they match → the CDN served the exact code we published.
+                  If they differ → consider running locally instead.
+                </p>
+
+                <div class="guide-callout">
+                  <strong>Published hashes:</strong>
+                  <code>github.com/boblauzon/keyvault-sidekick/releases</code>
+                  — every release tag lists the expected SHA-256.
+                </div>
+
+                <h2 style="font-size:11px;margin-top:32px">Run locally — maximum trust</h2>
+
+                <p>
+                  For zero CDN trust, run KeyVault Sidekick from your own machine.
+                  The app works identically from <code>file://</code>, with no server needed.
+                </p>
+
+                <div class="guide-steps">
+                  <div class="guide-step">
+                    <div class="guide-step-num">A</div>
+                    <div class="guide-step-body">
+                      <strong>Save the page offline.</strong>
+                      Click the button below to download the exact HTML currently loaded
+                      in this tab. Or use <code>Ctrl+S</code> / <code>Cmd+S</code> in your browser.
+                      <div style="margin-top:10px">
+                        <button type="button" class="primary" id="save-offline-btn">Save offline copy</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">B</div>
+                    <div class="guide-step-body">
+                      <strong>Open the file.</strong>
+                      Double-click <code>keyvault-sidekick.html</code> — your browser
+                      will open it from <code>file://</code>. The app runs identically:
+                      same Web Crypto, same localStorage. No network involved.
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">C</div>
+                    <div class="guide-step-body">
+                      <strong>(Optional) Verify the downloaded file's hash.</strong>
+                      Use your OS tools and compare against the GitHub release hash:
+                      <div class="guide-code"><span class="cm"># Windows</span>
+certutil -hashfile keyvault-sidekick.html SHA256
+
+<span class="cm"># macOS / Linux</span>
+shasum -a 256 keyvault-sidekick.html</div>
+                    </div>
+                  </div>
+                  <div class="guide-step">
+                    <div class="guide-step-num">D</div>
+                    <div class="guide-step-body">
+                      <strong>Or clone from GitHub directly</strong> for maximum auditability:
+                      <div class="guide-code">git clone https://github.com/boblauzon/keyvault-sidekick.git
+cd keyvault-sidekick
+py -3 -m http.server 8091
+<span class="cm"># open http://localhost:8091</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-warn-callout">
+                  <strong>Note on hash matching:</strong> The runtime hash above is
+                  computed from <code>document.documentElement.outerHTML</code> — what
+                  the browser actually parsed. This may differ from the raw source byte-for-byte
+                  due to whitespace and attribute normalization. We publish the
+                  <strong>runtime hash</strong> (computed the same way) in each release so
+                  the comparison works. If you OS-hash the downloaded file, compare against
+                  the <strong>file hash</strong> also published in the release notes.
+                </div>
+              </div>
+
             </div>
           </div>
         `;
+
+        // Populate the integrity hash + wire buttons after the guide renders
+        __integrityHashPromise.then(hash => {
+          const el = document.getElementById('guide-integrity-hash');
+          if (!el) return;
+          if (hash) {
+            el.textContent = hash;
+          } else {
+            el.textContent = 'unavailable (crypto.subtle failed)';
+            el.style.color = 'var(--text-mute)';
+          }
+        });
+
+        const copyBtn = document.getElementById('copy-integrity-hash');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async () => {
+            const hash = await __integrityHashPromise;
+            if (!hash) { showToast('Hash unavailable', 'err'); return; }
+            try { await copyToClipboard(hash); showToast('Hash copied'); }
+            catch { showToast('Could not copy', 'err'); }
+          });
+        }
+
+        const saveBtn = document.getElementById('save-offline-btn');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', () => {
+            try {
+              downloadText(__initialHTML, 'keyvault-sidekick.html');
+              showToast('Offline copy downloaded');
+            } catch (err) {
+              showToast('Download failed: ' + (err.message || 'unknown'), 'err');
+            }
+          });
+        }
       }
 
       // ── Settings screen ───────────────────────────────────────────────────────
