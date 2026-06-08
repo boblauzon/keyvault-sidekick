@@ -280,6 +280,15 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
+### Phase 7.5 — Abuse protection (v2.0.1) — SHIPPED 2026-06-08
+Clarification from user: the reason for user management was specifically to enable abuse controls. User mgmt alone gates WHO can access — this layer adds rate limits, lockout, audit, CSRF, password strength.
+- **Rate limiting** via `[[rate_limiting]]` Pages bindings: LOGIN_LIMITER (5/60s/IP), INVITE_LIMITER (10/60s/IP), ADMIN_LIMITER (30/10s/session). All return 429 on exceedance.
+- **Account lockout** (D1-backed, hourly window): 5 failed logins in 1 hour → account locked for 1 hour. `failed_logins` + `locked_accounts` tables. Successful login clears counter. Lockout indicator in admin panel.
+- **Audit log** (migration 0002): `audit_log` table records every action (login_success/failure/locked, logout, user_*, invitation_*) with IP + UA + JSON details. GET /api/admin/audit-log endpoint with action/email/ip filters. Admin panel viewer with live refresh.
+- **CSRF**: Origin header check on every POST/PATCH/DELETE. SameSite=Lax cookie + Origin check = defense-in-depth.
+- **Password strength**: ≥8 chars, ≥3 of 4 character classes (lower/upper/digit/symbol), reject 24 common weak passwords. Applied to admin user creation + invite acceptance.
+- End-to-end verified: success+lockout+CSRF block+audit recording+weak-pw rejection all work as expected.
+
 ### Phase 7 — Multi-tenant + landing page (v2.0.0) — SHIPPED 2026-06-08
 **Major architecture pivot.** From zero-backend single-file vault → invitation-only SaaS with auth gate. The vault's local-only encryption properties are preserved; the new auth layer only controls who can OPEN the app at all. Vault content STILL never touches the server.
 - Repo restructured: `public/` (static), `functions/` (Pages Functions), `migrations/`, `scripts/`, `docs/`
