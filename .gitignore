@@ -15,3 +15,11 @@ Test Files/
 *.vault
 keyvault-sidekick.html
 keyvault-backup-*.html
+
+# Node / wrangler
+node_modules/
+.wrangler/
+*.local.toml
+
+# Bootstrap output
+.superadmin-bootstrap.json

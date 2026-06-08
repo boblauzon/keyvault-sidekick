@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Admin · KeyVault Sidekick</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    @media (max-width: 880px) { .admin-grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; padding: 24px; }
+    .panel-title { font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 6px; }
+    .panel h2 { margin: 0 0 18px 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+    .panel-actions { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+    .panel-actions h3 { font-size: 12px; font-family: var(--mono); color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 12px 0; }
+    .row { display: flex; gap: 8px; }
+    .row input { flex: 1; }
+    .row button { white-space: nowrap; }
+
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 4px;
+    }
+    .item-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .item-email { font-family: var(--mono); font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+    .item-sub { font-size: 11px; color: var(--text-mute); font-family: var(--mono); }
+    .item-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 12px; }
+    .badge {
+      font-size: 10px; padding: 2px 6px; border-radius: 3px;
+      font-family: var(--mono); letter-spacing: 0.04em; text-transform: uppercase;
+      border: 1px solid var(--border-strong); color: var(--text-dim);
+    }
+    .badge-superadmin { color: var(--purple); border-color: var(--purple); }
+    .badge-active { color: var(--ok); border-color: var(--ok); }
+    .badge-disabled { color: var(--text-mute); border-color: var(--text-mute); }
+    .badge-pending { color: var(--warn); border-color: var(--warn); }
+    .badge-accepted { color: var(--ok); border-color: var(--ok); }
+    .badge-expired { color: var(--text-mute); border-color: var(--text-mute); }
+    .badge-revoked { color: var(--danger); border-color: var(--danger); }
+
+    .invite-link-banner {
+      margin-top: 16px; padding: 14px;
+      background: rgba(45,212,191,0.05); border: 1px solid var(--accent-dim); border-radius: 4px;
+    }
+    .invite-link-banner-title { font-size: 11px; font-family: var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .invite-link {
+      display: flex; gap: 8px; align-items: center;
+      background: var(--bg); border: 1px solid var(--border-strong); border-radius: 4px;
+      padding: 8px 10px;
+    }
+    .invite-link input { border: none; padding: 0; background: transparent; font-size: 11px; }
+    .invite-link button { padding: 4px 10px; font-size: 11px; }
+    .invite-link-hint { font-size: 11px; color: var(--text-mute); margin-top: 8px; }
+
+    .empty-state { padding: 24px; text-align: center; color: var(--text-mute); font-size: 13px; }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--bg-elev-2); border: 1px solid var(--ok); color: var(--ok);
+      padding: 10px 16px; border-radius: 4px; font-size: 13px;
+      animation: fadeOut 2.4s forwards;
+    }
+    .toast.err { border-color: var(--danger); color: var(--danger); }
+    @keyframes fadeOut {
+      0% { opacity: 0; transform: translateY(10px); }
+      10%, 90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">KeyVault Sidekick</span>
+      <span class="brand-sub">/ VibeProSoft</span>
+    </a>
+    <div class="topbar-actions">
+      <a href="/app.html" class="btn">Open vault →</a>
+      <button type="button" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <div style="margin-bottom: 32px;">
+      <div class="panel-title">Administration</div>
+      <h2 style="margin: 0; font-size: 28px; font-weight: 700;">User management</h2>
+      <p style="color: var(--text-dim); margin: 8px 0 0 0;">Add users directly with an initial password, or send them a one-time invitation link.</p>
+    </div>
+
+    <div class="admin-grid">
+
+      <div class="panel">
+        <h2>Users</h2>
+        <div class="panel-actions">
+          <h3>Create user</h3>
+          <div class="row" style="margin-bottom: 8px;">
+            <input type="email" id="cu-email" placeholder="user@example.com">
+          </div>
+          <div class="row">
+            <input type="text" id="cu-password" placeholder="Initial password (min 8 chars)">
+            <select id="cu-role" style="width: 130px;">
+              <option value="user" selected>User</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+            <button type="button" class="primary" id="cu-submit">Create</button>
+          </div>
+          <div id="cu-error" class="error" style="display:none"></div>
+        </div>
+        <div id="users-list" class="item-list">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Invitations</h2>
+        <div class="panel-actions">
+          <h3>Send invitation</h3>
+          <div class="row">
+            <input type="email" id="inv-email" placeholder="user@example.com">
+            <select id="inv-role" style="width: 130px;">
+              <option value="user" selected>User</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+            <button type="button" class="primary" id="inv-submit">Generate link</button>
+          </div>
+          <div id="inv-error" class="error" style="display:none"></div>
+          <div id="inv-link-box"></div>
+        </div>
+        <div id="invitations-list" class="item-list">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script>
+    // ── Bootstrap: confirm we're a superadmin ────────────────────────────────
+    let me = null;
+    fetch('/api/auth/me', { credentials: 'same-origin' }).then(async r => {
+      if (!r.ok) { window.location.href = '/login.html'; return; }
+      const data = await r.json();
+      me = data.user;
+      if (me.role !== 'superadmin') {
+        window.location.href = '/app.html';
+        return;
+      }
+      loadUsers();
+      loadInvitations();
+    });
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
+    function showError(elId, msg) {
+      const el = $(elId);
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+    function showToast(text, kind) {
+      const t = document.createElement('div');
+      t.className = 'toast ' + (kind || '');
+      t.textContent = text;
+      $('toast-root').appendChild(t);
+      setTimeout(() => t.remove(), 2400);
+    }
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().slice(0, 10);
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const list = $('users-list');
+      try {
+        const r = await fetch('/api/admin/users', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed to load users.');
+        if (!data.users.length) {
+          list.innerHTML = '<div class="empty-state">No users.</div>'; return;
+        }
+        list.innerHTML = data.users.map(u => `
+          <div class="item" data-user-id="${escapeHtml(u.id)}">
+            <div class="item-meta">
+              <div class="item-email">${escapeHtml(u.email)}
+                <span class="badge ${u.role === 'superadmin' ? 'badge-superadmin' : ''}">${u.role}</span>
+                <span class="badge badge-${escapeHtml(u.status)}">${u.status}</span>
+              </div>
+              <div class="item-sub">Created ${fmtDate(u.created_at)}${u.last_login ? ' · last login ' + fmtDate(u.last_login) : ''}</div>
+            </div>
+            <div class="item-actions">
+              ${u.id === me.id ? '<span class="badge">You</span>' : `<button type="button" class="danger" data-action="delete">Delete</button>`}
+            </div>
+          </div>
+        `).join('');
+
+        list.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('.item').dataset.userId;
+            if (!confirm('Permanently delete this user? This cannot be undone.')) return;
+            btn.disabled = true;
+            const r = await fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+              method: 'DELETE', credentials: 'same-origin'
+            });
+            const data = await r.json().catch(()=>({}));
+            if (!r.ok) { showToast(data.error || 'Delete failed', 'err'); btn.disabled = false; return; }
+            showToast('User deleted');
+            loadUsers();
+          });
+        });
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    $('cu-submit').addEventListener('click', async () => {
+      const btn = $('cu-submit');
+      const email = $('cu-email').value.trim();
+      const password = $('cu-password').value;
+      const role = $('cu-role').value;
+      if (!email || !password) { showError('cu-error', 'Email and password are required.'); return; }
+      if (password.length < 8) { showError('cu-error', 'Password must be at least 8 characters.'); return; }
+      btn.disabled = true;
+      const r = await fetch('/api/admin/users', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
+      const data = await r.json().catch(() => ({}));
+      btn.disabled = false;
+      if (!r.ok) { showError('cu-error', data.error || 'Create failed.'); return; }
+      $('cu-email').value = ''; $('cu-password').value = '';
+      showToast('User created');
+      loadUsers();
+    });
+
+    // ── Invitations ────────────────────────────────────────────────────────
+    async function loadInvitations() {
+      const list = $('invitations-list');
+      try {
+        const r = await fetch('/api/admin/invitations', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed to load invitations.');
+        if (!data.invitations.length) {
+          list.innerHTML = '<div class="empty-state">No invitations.</div>'; return;
+        }
+        list.innerHTML = data.invitations.map(inv => `
+          <div class="item" data-inv-id="${escapeHtml(inv.id)}" data-state="${escapeHtml(inv.state)}">
+            <div class="item-meta">
+              <div class="item-email">${escapeHtml(inv.email)}
+                <span class="badge badge-${escapeHtml(inv.state)}">${inv.state}</span>
+                <span class="badge ${inv.role === 'superadmin' ? 'badge-superadmin' : ''}">${inv.role}</span>
+              </div>
+              <div class="item-sub">
+                Created ${fmtDate(inv.created_at)}
+                ${inv.state === 'pending' ? '· expires ' + fmtDate(inv.expires_at) : ''}
+                ${inv.accepted_at ? '· accepted ' + fmtDate(inv.accepted_at) : ''}
+                ${inv.revoked_at ? '· revoked ' + fmtDate(inv.revoked_at) : ''}
+              </div>
+            </div>
+            <div class="item-actions">
+              ${inv.state === 'pending' ? '<button type="button" class="danger" data-action="revoke">Revoke</button>' : ''}
+            </div>
+          </div>
+        `).join('');
+
+        list.querySelectorAll('button[data-action="revoke"]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.closest('.item').dataset.invId;
+            if (!confirm('Revoke this invitation? The link will stop working.')) return;
+            btn.disabled = true;
+            const r = await fetch(`/api/admin/invitations/${encodeURIComponent(id)}`, {
+              method: 'DELETE', credentials: 'same-origin'
+            });
+            const data = await r.json().catch(()=>({}));
+            if (!r.ok) { showToast(data.error || 'Revoke failed', 'err'); btn.disabled = false; return; }
+            showToast('Invitation revoked');
+            loadInvitations();
+          });
+        });
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    $('inv-submit').addEventListener('click', async () => {
+      const btn = $('inv-submit');
+      const email = $('inv-email').value.trim();
+      const role = $('inv-role').value;
+      if (!email) { showError('inv-error', 'Email is required.'); return; }
+      btn.disabled = true;
+      const r = await fetch('/api/admin/invitations', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role })
+      });
+      const data = await r.json().catch(() => ({}));
+      btn.disabled = false;
+      if (!r.ok) { showError('inv-error', data.error || 'Create failed.'); return; }
+      $('inv-email').value = '';
+      $('inv-link-box').innerHTML = `
+        <div class="invite-link-banner">
+          <div class="invite-link-banner-title">One-time link — copy and send NOW</div>
+          <div class="invite-link">
+            <input type="text" id="link-input" readonly value="${escapeHtml(data.inviteUrl)}">
+            <button type="button" class="primary" id="copy-link">Copy</button>
+          </div>
+          <div class="invite-link-hint">
+            This link will not appear again. Send it to <strong>${escapeHtml(data.invitation.email)}</strong>
+            via email, Slack, or another secure channel. It expires in 7 days.
+          </div>
+        </div>
+      `;
+      document.getElementById('copy-link').addEventListener('click', async () => {
+        const input = document.getElementById('link-input');
+        try {
+          await navigator.clipboard.writeText(input.value);
+          showToast('Invitation link copied');
+        } catch {
+          input.select();
+          showToast('Press Ctrl+C / Cmd+C to copy', 'err');
+        }
+      });
+      loadInvitations();
+    });
+
+    // ── Logout ──────────────────────────────────────────────────────────────
+    $('logout-btn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
+  <!-- CSP: connect-src 'self' allows only same-origin auth API calls (/api/auth/me, /logout).
+       The vault content NEVER goes through any fetch — it stays in localStorage.
+       The auth API has zero access to vault content; it only manages session cookies. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
   <meta name="referrer" content="no-referrer">
   <title>KeyVault Sidekick</title>
   <style>
@@ -84,6 +87,20 @@
     }
     .status-chip.locked { color: var(--warn); border-color: var(--warn); }
     .status-chip.unlocked { color: var(--ok); border-color: var(--ok); }
+
+    .user-pill {
+      font-family: var(--mono); font-size: 11px;
+      padding: 3px 8px; border-radius: 3px;
+      border: 1px solid var(--border-strong); color: var(--text-dim);
+      display: inline-flex; gap: 8px; align-items: center;
+      max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .user-pill-admin {
+      font-size: 9px; padding: 1px 5px; border-radius: 2px;
+      background: rgba(192,132,252,0.1); color: var(--purple); border: 1px solid var(--purple);
+      text-decoration: none; letter-spacing: 0.05em;
+    }
+    .user-pill-admin:hover { background: rgba(192,132,252,0.18); text-decoration: none; }
 
     main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 32px 20px 80px; }
 
@@ -674,6 +691,42 @@
   <script>
     'use strict';
 
+    // ── Auth gate ─────────────────────────────────────────────────────────────
+    // Capture URL fragment BEFORE any auth redirect — fragments don't survive
+    // server-side redirects, so we have to stash it client-side first.
+    (function captureFragmentEarly() {
+      try {
+        const h = window.location.hash;
+        if (!h || h.length <= 1) return;
+        const params = new URLSearchParams(h.slice(1));
+        if (params.get('action') !== 'prefill' || !params.get('value')) return;
+        const prefill = new URLSearchParams();
+        for (const [k, v] of params) { if (k !== 'action') prefill.set(k, v); }
+        sessionStorage.setItem('kvs_prefill', prefill.toString());
+        history.replaceState(null, '', window.location.pathname);
+      } catch { /* ignore */ }
+    })();
+
+    // Verify session. If unauthenticated, redirect to /login.html.
+    // The vault UI does NOT render until this check succeeds.
+    let __currentUser = null;
+    const __authReady = (async () => {
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (!r.ok) {
+          window.location.href = '/login.html';
+          // Keep page blank while redirecting.
+          await new Promise(() => {}); // never resolve
+        }
+        const data = await r.json();
+        __currentUser = data.user;
+      } catch (err) {
+        // Network failure — show a friendly error rather than blank screen.
+        document.body.innerHTML = '<div style="padding:40px; font-family:system-ui; color:#e6ebf2; background:#0a0d10; min-height:100vh"><h1>Cannot verify session</h1><p>Check your network and reload.</p></div>';
+        await new Promise(() => {});
+      }
+    })();
+
     // ── Integrity capture ─────────────────────────────────────────────────────
     // Captured at script start, BEFORE any DOM mutation. Used for:
     //   1. Computing SHA-256 of the HTML the user actually loaded (for CDN
@@ -1151,21 +1204,39 @@
       }
 
       function setStatusChip(state) {
+        // User pill (right of everything) — shown whenever auth is known
+        const userPill = __currentUser ? `
+          <span class="user-pill" title="${escapeHtml(__currentUser.email)}">
+            ${escapeHtml(__currentUser.email)}
+            ${__currentUser.role === 'superadmin' ? '<a href="/admin.html" class="user-pill-admin">ADMIN</a>' : ''}
+          </span>
+          <button type="button" id="btn-signout" class="btn-help" title="Sign out" aria-label="Sign out">⏻</button>
+        ` : '';
+
         if (state === 'locked') {
-          topbarActionsEl.innerHTML = '<span class="status-chip locked">Locked</span>';
+          topbarActionsEl.innerHTML = '<span class="status-chip locked">Locked</span>' + userPill;
         } else if (state === 'unlocked') {
           topbarActionsEl.innerHTML = `
             <span class="status-chip unlocked">Unlocked</span>
             <button type="button" id="btn-help" class="btn-help" title="Claude Code integration & security guide" aria-label="Help">?</button>
             <button type="button" id="btn-settings" class="btn-settings-gear" title="Settings" aria-label="Settings">⚙</button>
             <button type="button" id="btn-lock">Lock</button>
+            ${userPill}
           `;
           document.getElementById('btn-lock').addEventListener('click', lock);
           document.getElementById('btn-settings').addEventListener('click', () => navigate('settings'));
           document.getElementById('btn-help').addEventListener('click', () => navigate('guide'));
         } else {
-          topbarActionsEl.innerHTML = '';
+          topbarActionsEl.innerHTML = userPill;
         }
+
+        const signOutBtn = document.getElementById('btn-signout');
+        if (signOutBtn) signOutBtn.addEventListener('click', async () => {
+          stopIdleTimer();
+          VaultState.lock();
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(()=>{});
+          window.location.href = '/';
+        });
       }
 
       function setTopNav(activeView) {
@@ -3420,10 +3491,15 @@ py -3 -m http.server 8091
       return { init, _internal: { mutate, findProject, findKey } };
     })();
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', App.init);
-    } else {
+    // Wait for both DOM and auth gate before initializing the vault UI.
+    async function bootApp() {
+      await __authReady;
       App.init();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApp);
+    } else {
+      bootApp();
     }
   </script>
 </body>

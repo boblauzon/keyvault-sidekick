@@ -1,0 +1,13 @@
+name = "keyvault-sidekick"
+compatibility_date = "2026-06-08"
+pages_build_output_dir = "public"
+
+# D1 binding for users + invitations
+[[d1_databases]]
+binding = "DB"
+database_name = "keyvault-sidekick-db"
+database_id = "4cbb409d-4356-4007-b62f-58493498b279"
+
+# Secrets set via `wrangler pages secret put` — DO NOT put values here:
+#   SESSION_SECRET     — HMAC key for session cookies (32+ bytes)
+#   INVITE_TOKEN_SECRET — HMAC key for invitation tokens (32+ bytes)

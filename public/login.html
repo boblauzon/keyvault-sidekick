@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Sign in · KeyVault Sidekick</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    main {
+      min-height: calc(100vh - 60px); display: flex;
+      align-items: center; justify-content: center; padding: 40px 20px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">KeyVault Sidekick</span>
+      <span class="brand-sub">/ VibeProSoft</span>
+    </a>
+    <div class="topbar-actions">
+      <a href="/" class="btn ghost">← Back</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h1>Sign in</h1>
+      <p class="subtitle">Enter the email and password your invitation administrator gave you.</p>
+      <form id="login-form" autocomplete="off" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" required autocomplete="username" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="primary" id="submit" style="width:100%; padding: 12px;">Sign in</button>
+        <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
+      </form>
+      <p style="margin-top: 20px; font-size: 12px; color: var(--text-mute); text-align: center;">
+        No invitation yet? Email <a href="mailto:rob.lauzon@vibeprosoft.com">rob.lauzon@vibeprosoft.com</a>.
+      </p>
+    </div>
+  </main>
+
+  <script>
+    // If already logged in, jump straight to /app.html
+    fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => {
+      if (r.ok) window.location.href = '/app.html' + window.location.hash;
+    }).catch(()=>{});
+
+    const form = document.getElementById('login-form');
+    const emailEl = document.getElementById('email');
+    const pwEl = document.getElementById('password');
+    const submitBtn = document.getElementById('submit');
+    const errEl = document.getElementById('error');
+
+    function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+      submitBtn.disabled = true;
+      const oldText = submitBtn.textContent;
+      submitBtn.textContent = 'Signing in…';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ email: emailEl.value, password: pwEl.value })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showError(data.error || 'Login failed.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = oldText;
+          return;
+        }
+        // Preserve URL fragment for prefill flow
+        window.location.href = '/app.html' + window.location.hash;
+      } catch (err) {
+        showError('Network error. Try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = oldText;
+      }
+    });
+    emailEl.focus();
+  </script>
+</body>
+</html>
