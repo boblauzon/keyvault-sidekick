@@ -6,6 +6,8 @@ No backend. No sign-up. No breach surface. Keys never leave the device.
 
 Built for Claude Code users on the Cloudflare stack — organizing project secrets, generating secure values, and exporting keys to `.env` files without pasting them into chat.
 
+**Live:** https://keyvault-sidekick.pages.dev
+
 ---
 
 ## What it does
@@ -107,7 +109,7 @@ http://localhost:8091/#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_x
 | 2 — Core vault (project/key CRUD, search, .env import) | ✅ Shipped |
 | 3 — Generators (7 types, save-to-project) | ✅ Shipped |
 | 4 — Export, settings, auto-lock, .vault backup, prefill hook | ✅ Shipped |
-| 5 — GitHub + CF Pages deploy | 🚧 In progress |
+| 5 — GitHub + CF Pages deploy | ✅ Shipped |
 
 ---
 
