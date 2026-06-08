@@ -9,3 +9,9 @@ Thumbs.db
 
 # Local dev notes
 *.local.md
+
+# Local test artifacts — never commit potential vault backups or saved copies
+Test Files/
+*.vault
+keyvault-sidekick.html
+keyvault-backup-*.html

