@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Account · KeyVault Sidekick</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    main { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .account-section { margin-bottom: 32px; }
+    .account-section h2 {
+      font-size: 11px; font-family: var(--mono);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--accent); margin: 0 0 16px 0;
+    }
+    .account-card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: 6px; padding: 24px;
+    }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label {
+      font-family: var(--mono); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-dim);
+    }
+    .info-value {
+      font-family: var(--mono); font-size: 13px; color: var(--text);
+    }
+    .info-value.role-superadmin { color: var(--purple); }
+
+    .pw-strength {
+      margin-top: 8px; display: flex; gap: 4px;
+    }
+    .pw-strength-bar {
+      flex: 1; height: 4px; background: var(--bg-elev-2); border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    .pw-strength-bar.lit-1 { background: var(--danger); }
+    .pw-strength-bar.lit-2 { background: var(--warn); }
+    .pw-strength-bar.lit-3 { background: var(--ok); }
+    .pw-strength-bar.lit-4 { background: var(--accent); }
+    .pw-strength-label {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-mute); margin-top: 6px;
+    }
+    .pw-requirements {
+      margin-top: 10px; padding: 10px 12px;
+      background: var(--bg); border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      font-family: var(--mono); font-size: 11px; line-height: 1.7;
+      color: var(--text-mute);
+    }
+    .pw-requirements .req {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .pw-requirements .req.ok { color: var(--ok); }
+    .pw-requirements .req.fail { color: var(--text-mute); }
+    .pw-requirements .req::before {
+      content: '○'; display: inline-block; width: 12px;
+    }
+    .pw-requirements .req.ok::before { content: '✓'; color: var(--ok); }
+
+    .session-warning {
+      margin-top: 16px; padding: 12px 14px;
+      background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.3);
+      border-radius: 4px; color: var(--warn); font-size: 12px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">KeyVault Sidekick</span>
+      <span class="brand-sub">/ VibeProSoft</span>
+    </a>
+    <div class="topbar-actions">
+      <a href="/app.html" class="btn">Open vault</a>
+      <a href="/admin.html" class="btn" id="admin-link" style="display:none">Admin</a>
+      <button type="button" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <div style="margin-bottom: 32px;">
+      <h2 style="font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 0;">Settings</h2>
+      <h1 style="margin: 6px 0 0 0; font-size: 28px; font-weight: 700;">Account</h1>
+    </div>
+
+    <div class="account-section">
+      <h2>Account information</h2>
+      <div class="account-card">
+        <div class="info-row">
+          <div class="info-label">Email</div>
+          <div class="info-value" id="info-email">…</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Role</div>
+          <div class="info-value" id="info-role">…</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">User ID</div>
+          <div class="info-value" id="info-id" style="font-size: 11px; color: var(--text-mute);">…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h2>Change login password</h2>
+      <div class="account-card">
+        <p style="margin: 0 0 20px 0; color: var(--text-dim); font-size: 13px; line-height: 1.55;">
+          This is the password you use to <strong>sign into KeyVault Sidekick</strong>.
+          It is separate from your vault's master password — changing this will not
+          affect your vault contents.
+        </p>
+        <form id="cp-form" autocomplete="off" novalidate>
+          <div class="field">
+            <label for="current">Current password</label>
+            <input type="password" id="current" required autocomplete="current-password">
+          </div>
+          <div class="field">
+            <label for="new">New password</label>
+            <input type="password" id="new" required minlength="8" autocomplete="new-password">
+            <div class="pw-strength">
+              <div class="pw-strength-bar" id="bar-1"></div>
+              <div class="pw-strength-bar" id="bar-2"></div>
+              <div class="pw-strength-bar" id="bar-3"></div>
+              <div class="pw-strength-bar" id="bar-4"></div>
+            </div>
+            <div class="pw-strength-label" id="pw-label">Enter a new password</div>
+            <div class="pw-requirements">
+              <div class="req" id="req-len">At least 8 characters</div>
+              <div class="req" id="req-classes">3 of: lowercase, uppercase, digit, symbol</div>
+              <div class="req" id="req-uncommon">Not a common password</div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="confirm">Confirm new password</label>
+            <input type="password" id="confirm" required autocomplete="new-password">
+          </div>
+          <div class="session-warning">
+            <strong>⚠️ Heads-up:</strong> Changing your password will sign you out of
+            every other device that's currently signed in. This tab will stay
+            signed in.
+          </div>
+          <div style="margin-top: 16px; display: flex; gap: 8px;">
+            <button type="submit" class="primary" id="submit" style="padding: 12px 24px;">Change password</button>
+            <a href="/app.html" class="btn" style="padding: 12px 24px;">Cancel</a>
+          </div>
+          <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
+          <div id="success" class="success" role="status" aria-live="polite" style="display:none"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ── Bootstrap: load current user ────────────────────────────────────────
+    fetch('/api/auth/me', { credentials: 'same-origin' }).then(async r => {
+      if (!r.ok) { window.location.href = '/login.html'; return; }
+      const { user } = await r.json();
+      $('info-email').textContent = user.email;
+      $('info-role').textContent = user.role;
+      if (user.role === 'superadmin') {
+        $('info-role').classList.add('role-superadmin');
+        $('admin-link').style.display = '';
+      }
+      $('info-id').textContent = user.id;
+    });
+
+    // ── Password strength meter ─────────────────────────────────────────────
+    const WEAK = new Set([
+      'password', 'password1', 'password123', 'qwerty', 'qwerty123',
+      '12345678', '123456789', '1234567890', 'iloveyou', 'admin',
+      'admin123', 'letmein', 'monkey', 'football', 'baseball',
+      'master', 'superman', 'welcome', 'welcome1', 'welcome123',
+      'sunshine', 'princess', 'changeme', 'changeme123'
+    ]);
+
+    function gradePassword(pw) {
+      if (!pw) return { score: 0, label: 'Enter a new password', reqs: {} };
+      const reqs = {
+        len: pw.length >= 8,
+        classes: ([/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(re => re.test(pw)).length) >= 3,
+        uncommon: !WEAK.has(pw.toLowerCase())
+      };
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (pw.length >= 12) score++;
+      if (([/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(re => re.test(pw)).length) >= 3) score++;
+      if (pw.length >= 16 && !WEAK.has(pw.toLowerCase())) score++;
+      if (WEAK.has(pw.toLowerCase())) score = Math.min(score, 1);
+      const labels = ['Weak', 'Weak', 'OK', 'Strong', 'Excellent'];
+      return { score, label: pw.length === 0 ? 'Enter a new password' : labels[score], reqs };
+    }
+
+    function updateStrengthUI() {
+      const pw = $('new').value;
+      const { score, label, reqs } = gradePassword(pw);
+      $('pw-label').textContent = label;
+      for (let i = 1; i <= 4; i++) {
+        const bar = $('bar-' + i);
+        bar.classList.remove('lit-1','lit-2','lit-3','lit-4');
+        if (i <= score) bar.classList.add('lit-' + Math.min(score, 4));
+      }
+      ['len','classes','uncommon'].forEach(key => {
+        const el = $('req-' + key);
+        el.classList.remove('ok','fail');
+        if (reqs[key] === true) el.classList.add('ok');
+        else if (reqs[key] === false) el.classList.add('fail');
+      });
+    }
+    $('new').addEventListener('input', updateStrengthUI);
+    updateStrengthUI();
+
+    // ── Submit handler ──────────────────────────────────────────────────────
+    function showError(msg) { $('error').textContent = msg; $('error').style.display = 'block'; $('success').style.display = 'none'; }
+    function showSuccess(msg) { $('success').textContent = msg; $('success').style.display = 'block'; $('error').style.display = 'none'; }
+
+    $('cp-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cur = $('current').value;
+      const nw = $('new').value;
+      const cf = $('confirm').value;
+
+      if (!cur) return showError('Current password is required.');
+      if (nw.length < 8) return showError('New password must be at least 8 characters.');
+      if (nw !== cf) return showError('Passwords do not match.');
+
+      const btn = $('submit');
+      btn.disabled = true;
+      const oldText = btn.textContent;
+      btn.textContent = 'Changing…';
+      try {
+        const r = await fetch('/api/auth/change-password', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword: cur, newPassword: nw })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          showError(data.error || 'Password change failed.');
+          btn.disabled = false;
+          btn.textContent = oldText;
+          return;
+        }
+        showSuccess(data.message || 'Password changed.');
+        $('current').value = ''; $('new').value = ''; $('confirm').value = '';
+        updateStrengthUI();
+        btn.disabled = false;
+        btn.textContent = oldText;
+      } catch {
+        showError('Network error. Try again.');
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+    });
+
+    // ── Logout ──────────────────────────────────────────────────────────────
+    $('logout-btn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

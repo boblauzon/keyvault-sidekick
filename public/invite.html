@@ -8,119 +8,122 @@
   <link rel="stylesheet" href="/shared.css">
   <style>
     main {
-      min-height: calc(100vh - 60px); display: flex;
-      align-items: center; justify-content: center; padding: 40px 20px;
+      min-height: calc(100vh - 70px); display: flex;
+      align-items: center; justify-content: center; padding: 40px 24px;
     }
     .email-display {
-      display: block; padding: 10px 12px;
-      background: var(--bg); border: 1px solid var(--border-strong); border-radius: 4px;
-      color: var(--accent); font-family: var(--mono); font-size: 13px;
+      display: block; padding: 12px 14px;
+      background: rgba(2,6,23,0.6); border: 1px solid var(--border-strong);
+      border-radius: var(--r-lg);
+      color: var(--teal-300); font-family: var(--mono); font-size: 13px;
     }
   </style>
 </head>
-<body>
-  <header class="topbar">
-    <a href="/" class="brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">KeyVault Sidekick</span>
-      <span class="brand-sub">/ VibeProSoft</span>
-    </a>
-  </header>
+<body class="bg-gradient-page">
 
-  <main>
-    <div class="card" id="loading-card">
-      <h1>Verifying invitation…</h1>
-      <p class="subtitle" style="margin: 0;">Just a moment.</p>
-    </div>
+  <div class="orbs">
+    <div class="orb orb-tl"></div>
+    <div class="orb orb-br"></div>
+  </div>
 
-    <div class="card" id="invalid-card" style="display:none">
-      <h1>Invitation problem</h1>
-      <p class="subtitle" id="invalid-msg"></p>
-      <a href="/" class="btn" style="width: 100%; padding: 12px; text-align: center;">Back to home</a>
-    </div>
+  <div class="page-content">
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">KeyVault Sidekick</span>
+          <span class="brand-sub">by VibeProSoft</span>
+        </span>
+      </a>
+    </header>
 
-    <div class="card" id="accept-card" style="display:none">
-      <h1>Set up your account</h1>
-      <p class="subtitle">You've been invited to KeyVault Sidekick. Choose a password to activate your account.</p>
-      <div class="field">
-        <label>Email</label>
-        <span class="email-display" id="email-display"></span>
+    <main>
+      <div class="card" id="loading-card">
+        <h1>Verifying invitation…</h1>
+        <p class="subtitle" style="margin: 0;">Just a moment.</p>
       </div>
-      <form id="accept-form" autocomplete="off" novalidate>
-        <div class="field">
-          <label for="password">New password</label>
-          <input type="password" id="password" required minlength="8" autocomplete="new-password">
-          <div class="field-hint">Minimum 8 characters. Long passphrases beat short complex ones.</div>
+
+      <div class="card" id="invalid-card" style="display:none">
+        <div class="card-icon" style="background: linear-gradient(135deg, var(--danger), #fb7185);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-        <div class="field">
-          <label for="confirm">Confirm password</label>
-          <input type="password" id="confirm" required autocomplete="new-password">
+        <h1>Invitation problem</h1>
+        <p class="subtitle" id="invalid-msg"></p>
+        <a href="/" class="btn" style="width: 100%; padding: 12px; justify-content: center;">Back to home</a>
+      </div>
+
+      <div class="card" id="accept-card" style="display:none">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         </div>
-        <button type="submit" class="primary" id="submit" style="width:100%; padding: 12px;">Activate account</button>
-        <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
-      </form>
-    </div>
-  </main>
+        <h1>Set up your account</h1>
+        <p class="subtitle">You've been invited to KeyVault Sidekick. Choose a password to activate your account.</p>
+        <div class="field">
+          <label>Email</label>
+          <span class="email-display" id="email-display"></span>
+        </div>
+        <form id="accept-form" autocomplete="off" novalidate>
+          <div class="field">
+            <label for="password">New password</label>
+            <input type="password" id="password" required minlength="8" autocomplete="new-password" placeholder="Pick something memorable">
+            <div class="field-hint">Minimum 8 characters · 3 of: lowercase, uppercase, digit, symbol.</div>
+          </div>
+          <div class="field">
+            <label for="confirm">Confirm password</label>
+            <input type="password" id="confirm" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="primary large" id="submit" style="width:100%; justify-content: center; padding: 14px;">
+            <span id="submit-label">Activate account</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
+        </form>
+      </div>
+    </main>
+  </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
-    const loadingCard = document.getElementById('loading-card');
-    const invalidCard = document.getElementById('invalid-card');
-    const acceptCard = document.getElementById('accept-card');
-    const invalidMsg = document.getElementById('invalid-msg');
-    const emailDisplay = document.getElementById('email-display');
-    const pwEl = document.getElementById('password');
-    const confirmEl = document.getElementById('confirm');
-    const submitBtn = document.getElementById('submit');
-    const errEl = document.getElementById('error');
+    const $ = id => document.getElementById(id);
+    const loadingCard = $('loading-card');
+    const invalidCard = $('invalid-card');
+    const acceptCard = $('accept-card');
 
-    function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
-    function showInvalid(msg) {
-      loadingCard.style.display = 'none';
-      invalidCard.style.display = 'block';
-      invalidMsg.textContent = msg;
-    }
+    function showError(msg) { $('error').textContent = msg; $('error').style.display = 'block'; }
+    function showInvalid(msg) { loadingCard.style.display = 'none'; invalidCard.style.display = 'block'; $('invalid-msg').textContent = msg; }
 
     if (!token) { showInvalid('No invitation token in URL.'); }
     else {
       fetch(`/api/auth/invite/${encodeURIComponent(token)}`).then(async r => {
         const data = await r.json().catch(() => ({}));
         if (!r.ok) { showInvalid(data.error || 'Invitation is invalid.'); return; }
-        loadingCard.style.display = 'none';
-        acceptCard.style.display = 'block';
-        emailDisplay.textContent = data.email;
-        pwEl.focus();
+        loadingCard.style.display = 'none'; acceptCard.style.display = 'block';
+        $('email-display').textContent = data.email;
+        $('password').focus();
       }).catch(() => showInvalid('Network error. Try again later.'));
     }
 
-    document.getElementById('accept-form').addEventListener('submit', async (e) => {
+    $('accept-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      errEl.style.display = 'none';
-      if (pwEl.value.length < 8) return showError('Password must be at least 8 characters.');
-      if (pwEl.value !== confirmEl.value) return showError('Passwords do not match.');
-      submitBtn.disabled = true;
-      const oldText = submitBtn.textContent;
-      submitBtn.textContent = 'Activating…';
+      $('error').style.display = 'none';
+      const pw = $('password').value, cf = $('confirm').value;
+      if (pw.length < 8) return showError('Password must be at least 8 characters.');
+      if (pw !== cf) return showError('Passwords do not match.');
+      $('submit').disabled = true;
+      $('submit-label').textContent = 'Activating…';
       try {
         const res = await fetch('/api/auth/accept-invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ token, password: pwEl.value })
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ token, password: pw })
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          showError(data.error || 'Could not activate account.');
-          submitBtn.disabled = false;
-          submitBtn.textContent = oldText;
-          return;
-        }
+        if (!res.ok) { showError(data.error || 'Could not activate account.'); $('submit').disabled = false; $('submit-label').textContent = 'Activate account'; return; }
         window.location.href = '/app.html';
       } catch {
-        showError('Network error. Try again.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = oldText;
+        showError('Network error. Try again.'); $('submit').disabled = false; $('submit-label').textContent = 'Activate account';
       }
     });
   </script>

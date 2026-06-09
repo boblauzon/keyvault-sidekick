@@ -1,0 +1,9 @@
+/* KeyVault Sidekick - Font Imports */
+
+/* System fonts are used by default for best performance and native feel */
+/* No custom fonts need to be imported - using system UI fonts */
+
+/* Font stacks are defined in theme.css as CSS variables:
+ * --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter
+ * --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", Consolas, "Courier New"
+ */

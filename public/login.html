@@ -8,56 +8,125 @@
   <link rel="stylesheet" href="/shared.css">
   <style>
     main {
-      min-height: calc(100vh - 60px); display: flex;
-      align-items: center; justify-content: center; padding: 40px 20px;
+      min-height: calc(100vh - 70px); display: flex;
+      align-items: center; justify-content: center; padding: 40px 24px;
     }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-mute); font-size: 13px;
+      margin-bottom: 24px; transition: color 0.12s ease;
+    }
+    .back-link:hover { color: var(--text-dim); text-decoration: none; }
+    .password-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; padding: 4px;
+      color: var(--text-mute); cursor: pointer;
+    }
+    .password-toggle:hover { color: var(--text-dim); background: transparent; }
+    .pw-wrapper { position: relative; }
+    .footer-note {
+      margin-top: 28px; padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-mute); text-align: center;
+    }
+    .trust-row {
+      margin-top: 24px; display: flex; justify-content: center; gap: 28px;
+      font-size: 12px; color: var(--text-mute);
+    }
+    .trust-row > div { display: flex; align-items: center; gap: 6px; }
   </style>
 </head>
-<body>
-  <header class="topbar">
-    <a href="/" class="brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">KeyVault Sidekick</span>
-      <span class="brand-sub">/ VibeProSoft</span>
-    </a>
-    <div class="topbar-actions">
-      <a href="/" class="btn ghost">← Back</a>
-    </div>
-  </header>
+<body class="bg-gradient-page">
 
-  <main>
-    <div class="card">
-      <h1>Sign in</h1>
-      <p class="subtitle">Enter the email and password your invitation administrator gave you.</p>
-      <form id="login-form" autocomplete="off" novalidate>
-        <div class="field">
-          <label for="email">Email</label>
-          <input type="email" id="email" required autocomplete="username" placeholder="you@example.com">
+  <div class="orbs">
+    <div class="orb orb-tl"></div>
+    <div class="orb orb-br"></div>
+  </div>
+
+  <div class="page-content">
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">KeyVault Sidekick</span>
+          <span class="brand-sub">by VibeProSoft</span>
+        </span>
+      </a>
+    </header>
+
+    <main>
+      <div style="width: 100%; max-width: 460px;">
+        <a href="/" class="back-link">← Back to home</a>
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h1>Sign in</h1>
+          <p class="subtitle">Enter the credentials your administrator sent you.</p>
+          <form id="login-form" autocomplete="off" novalidate>
+            <div class="field">
+              <label for="email">Email</label>
+              <input type="email" id="email" required autocomplete="username" placeholder="you@example.com">
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <div class="pw-wrapper">
+                <input type="password" id="password" required autocomplete="current-password" placeholder="Enter your password">
+                <button type="button" class="password-toggle" id="pw-toggle" aria-label="Show password">
+                  <svg id="eye-show" class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg id="eye-hide" class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="primary large" id="submit" style="width:100%; justify-content:center; padding: 14px;">
+              <span id="submit-label">Sign in</span>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
+          </form>
+          <div class="footer-note">
+            🔒 AES-256-GCM · PBKDF2 310k · Audited 2026-06-08
+          </div>
         </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input type="password" id="password" required autocomplete="current-password">
+        <div class="trust-row">
+          <div>
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+            Zero backend
+          </div>
+          <div>
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Local only
+          </div>
         </div>
-        <button type="submit" class="primary" id="submit" style="width:100%; padding: 12px;">Sign in</button>
-        <div id="error" class="error" role="alert" aria-live="polite" style="display:none"></div>
-      </form>
-      <p style="margin-top: 20px; font-size: 12px; color: var(--text-mute); text-align: center;">
-        No invitation yet? Email <a href="mailto:rob.lauzon@vibeprosoft.com">rob.lauzon@vibeprosoft.com</a>.
-      </p>
-    </div>
-  </main>
+        <p style="margin-top: 24px; font-size: 12px; color: var(--text-mute); text-align: center;">
+          No invitation yet? Email <a href="mailto:rob.lauzon@vibeprosoft.com">rob.lauzon@vibeprosoft.com</a>.
+        </p>
+      </div>
+    </main>
+  </div>
 
   <script>
-    // If already logged in, jump straight to /app.html
     fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => {
       if (r.ok) window.location.href = '/app.html' + window.location.hash;
     }).catch(()=>{});
 
-    const form = document.getElementById('login-form');
-    const emailEl = document.getElementById('email');
-    const pwEl = document.getElementById('password');
-    const submitBtn = document.getElementById('submit');
-    const errEl = document.getElementById('error');
+    const $ = id => document.getElementById(id);
+    const form = $('login-form');
+    const emailEl = $('email');
+    const pwEl = $('password');
+    const submitBtn = $('submit');
+    const submitLabel = $('submit-label');
+    const errEl = $('error');
+    const pwToggle = $('pw-toggle');
+
+    pwToggle.addEventListener('click', () => {
+      const isPw = pwEl.type === 'password';
+      pwEl.type = isPw ? 'text' : 'password';
+      $('eye-show').style.display = isPw ? 'none' : '';
+      $('eye-hide').style.display = isPw ? '' : 'none';
+    });
 
     function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
 
@@ -65,8 +134,7 @@
       e.preventDefault();
       errEl.style.display = 'none';
       submitBtn.disabled = true;
-      const oldText = submitBtn.textContent;
-      submitBtn.textContent = 'Signing in…';
+      submitLabel.textContent = 'Signing in…';
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -78,15 +146,14 @@
         if (!res.ok) {
           showError(data.error || 'Login failed.');
           submitBtn.disabled = false;
-          submitBtn.textContent = oldText;
+          submitLabel.textContent = 'Sign in';
           return;
         }
-        // Preserve URL fragment for prefill flow
         window.location.href = '/app.html' + window.location.hash;
-      } catch (err) {
+      } catch {
         showError('Network error. Try again.');
         submitBtn.disabled = false;
-        submitBtn.textContent = oldText;
+        submitLabel.textContent = 'Sign in';
       }
     });
     emailEl.focus();

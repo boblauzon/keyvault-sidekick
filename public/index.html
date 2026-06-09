@@ -8,244 +8,275 @@
   <title>KeyVault Sidekick · By VibeProSoft</title>
   <link rel="stylesheet" href="/shared.css">
   <style>
-    main { padding-bottom: 120px; }
-
-    /* Hero */
     .hero {
-      max-width: 1100px; margin: 0 auto; padding: 80px 24px 60px;
-      display: grid; grid-template-columns: 1.2fr 1fr;
+      max-width: 1280px; margin: 0 auto; padding: 80px 24px 100px;
+      display: grid; grid-template-columns: 1.15fr 1fr;
       gap: 64px; align-items: center;
     }
-    @media (max-width: 800px) {
-      .hero { grid-template-columns: 1fr; padding-top: 48px; gap: 32px; }
-    }
-    .hero-eyebrow {
-      display: inline-block; padding: 4px 10px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--accent);
-      border: 1px solid var(--accent-dim); border-radius: 3px;
-      margin-bottom: 16px;
+    @media (max-width: 880px) {
+      .hero { grid-template-columns: 1fr; padding: 48px 24px 60px; gap: 40px; }
     }
     .hero h1 {
-      font-size: 44px; font-weight: 700; line-height: 1.1;
-      letter-spacing: -0.02em; margin: 0 0 20px 0;
+      font-size: 60px; font-weight: 800; line-height: 1.05;
+      letter-spacing: -0.03em; color: white;
+      margin: 24px 0 24px 0;
     }
-    .hero h1 .accent { color: var(--accent); }
+    @media (max-width: 880px) { .hero h1 { font-size: 44px; } }
+    .hero h1 .gradient-text {
+      background: linear-gradient(90deg, var(--teal-400), var(--cyan-400));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
     .hero p.lede {
-      font-size: 16px; line-height: 1.6; color: var(--text-dim);
-      margin: 0 0 28px 0; max-width: 540px;
+      font-size: 18px; line-height: 1.6; color: var(--text-dim);
+      margin: 0 0 36px 0; max-width: 560px;
     }
     .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
-    .hero-vault-preview {
-      background: var(--bg-elev); border: 1px solid var(--border);
-      border-radius: 6px; padding: 20px;
-      font-family: var(--mono); font-size: 12px; line-height: 1.6;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    .hero-trust {
+      display: flex; gap: 32px; margin-top: 48px;
+      color: var(--text-dim); font-size: 14px; flex-wrap: wrap;
     }
-    .vault-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
-    .vault-row:last-child { border-bottom: none; }
-    .vault-name { color: var(--text); }
-    .vault-value { color: var(--text-mute); letter-spacing: 1px; }
-    .vault-type {
-      font-size: 10px; padding: 2px 6px; border-radius: 3px;
-      background: var(--bg-elev-2); color: var(--accent); margin-left: 8px;
+    .hero-trust > div { display: flex; align-items: center; gap: 8px; }
+    .hero-trust .icon { color: var(--teal-400); }
+
+    /* Vault preview */
+    .vault-preview-wrap { position: relative; }
+    .vault-preview-glow {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, var(--teal-400), var(--cyan-500));
+      filter: blur(48px); opacity: 0.18; border-radius: var(--r-2xl);
+    }
+    .vault-preview {
+      position: relative;
+      background: rgba(15,23,42,0.85);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-2xl);
+      padding: 28px;
+      box-shadow: var(--shadow-xl);
     }
     .vault-header {
-      font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--text-mute); padding-bottom: 8px; border-bottom: 1px solid var(--border);
-      margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 24px;
     }
+    .vault-header-meta { font-size: 11px; color: var(--text-mute); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+    .vault-header-project {
+      font-size: 17px; font-weight: 600; color: white; display: flex; align-items: center; gap: 10px;
+    }
+    .vault-color-dot { width: 12px; height: 12px; background: var(--teal-400); border-radius: 3px; }
+    .vault-header-count { font-size: 12px; color: var(--text-mute); }
+    .vault-key {
+      background: rgba(2,6,23,0.6); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 12px;
+      transition: border-color 0.15s ease;
+    }
+    .vault-key:last-child { margin-bottom: 0; }
+    .vault-key:hover { border-color: var(--slate-700); }
+    .vault-key-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .vault-key-name { font-family: var(--mono); font-size: 13px; color: white; }
+    .vault-key-value { font-family: var(--mono); font-size: 12px; color: var(--text-mute); letter-spacing: 2px; }
 
-    /* Sections */
-    section { padding: 60px 24px; }
-    .section-wrap { max-width: 1100px; margin: 0 auto; }
-    section h2 {
-      font-size: 11px; font-family: var(--mono);
-      text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--accent); margin: 0 0 12px 0;
+    /* Section wrappers */
+    section { padding: 80px 24px; position: relative; z-index: 2; }
+    .section-wrap { max-width: 1280px; margin: 0 auto; }
+    .section-heading { text-align: center; margin-bottom: 56px; }
+    .section-eyebrow {
+      display: inline-block; padding: 6px 14px;
+      background: rgba(45,212,191,0.08); border: 1px solid rgba(45,212,191,0.25);
+      border-radius: 9999px; color: var(--teal-400);
+      font-size: 11px; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 16px;
     }
-    section h3 {
-      font-size: 28px; font-weight: 600; letter-spacing: -0.01em;
-      margin: 0 0 36px 0; max-width: 640px;
-    }
+    .section-heading h2 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0 0 12px 0; }
+    @media (max-width: 880px) { .section-heading h2 { font-size: 30px; } }
+    .section-heading p { font-size: 17px; color: var(--text-dim); margin: 0; }
 
-    /* How it works */
-    .how-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    /* Feature grid */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    @media (max-width: 880px) { .features-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: rgba(15,23,42,0.5);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-2xl);
+      padding: 28px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
     }
-    @media (max-width: 800px) { .how-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 500px) { .how-grid { grid-template-columns: 1fr; } }
-    .how-step {
-      background: var(--bg-elev); border: 1px solid var(--border);
-      border-radius: 6px; padding: 24px;
-    }
-    .how-step-num {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--accent-dim); color: var(--accent);
-      font-family: var(--mono); font-size: 12px; font-weight: 700;
+    .feature-card:hover { border-color: var(--slate-700); transform: translateY(-2px); }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: var(--r-lg);
+      background: linear-gradient(135deg, rgba(45,212,191,0.18), rgba(6,182,212,0.18));
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
+      transition: transform 0.2s ease;
     }
-    .how-step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-    .how-step-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+    .feature-card:hover .feature-icon { transform: scale(1.08); }
+    .feature-icon svg { width: 24px; height: 24px; color: var(--teal-400); }
+    .feature-card h3 { margin: 0 0 8px 0; color: white; font-size: 17px; font-weight: 600; }
+    .feature-card p { margin: 0; color: var(--text-dim); font-size: 14px; line-height: 1.6; }
 
-    /* Security */
-    .security-bg { background: var(--bg-elev); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .sec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    @media (max-width: 800px) { .sec-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 500px) { .sec-grid { grid-template-columns: 1fr; } }
-    .sec-card {
-      background: var(--bg); border: 1px solid var(--border-strong);
-      border-radius: 6px; padding: 20px;
-    }
-    .sec-card-icon { font-size: 20px; margin-bottom: 10px; }
-    .sec-card-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-    .sec-card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.55; }
-
-    /* Use cases */
-    .use-cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    @media (max-width: 800px) { .use-cases-grid { grid-template-columns: 1fr; } }
+    /* Use cases (Claude Code) */
+    .uc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 880px) { .uc-grid { grid-template-columns: 1fr; } }
     .uc-card {
-      padding: 24px; border: 1px solid var(--border); border-radius: 6px;
-      background: var(--bg-elev);
+      padding: 28px;
+      background: rgba(15,23,42,0.5);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-2xl);
     }
-    .uc-card h4 { margin: 0 0 8px 0; font-size: 16px; }
-    .uc-card p { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+    .uc-card h4 { margin: 0 0 10px 0; font-size: 18px; color: white; font-weight: 600; }
+    .uc-card p { margin: 0 0 16px 0; color: var(--text-dim); font-size: 14px; line-height: 1.6; }
     .uc-code {
-      background: var(--bg); border: 1px solid var(--border-strong); border-radius: 4px;
-      padding: 12px; font-family: var(--mono); font-size: 11px;
-      color: var(--text-dim); line-height: 1.6; margin-top: 12px;
-      overflow-x: auto;
+      background: rgba(2,6,23,0.6); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 14px 16px;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--teal-300); line-height: 1.7;
+      overflow-x: auto; word-break: break-all; white-space: pre-wrap;
     }
 
-    /* CTA */
-    .cta-section { text-align: center; padding: 80px 24px; }
-    .cta-section h3 { margin: 0 auto 24px auto; }
-
-    /* Footer */
-    footer.site-footer {
-      padding: 24px; border-top: 1px solid var(--border);
-      background: var(--bg-elev);
-      font-family: var(--mono); font-size: 11px; color: var(--text-mute);
-      letter-spacing: 0.04em; text-transform: uppercase;
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    /* CTA section */
+    .cta-section {
+      max-width: 920px; margin: 0 auto; padding: 80px 24px;
     }
-    footer.site-footer a { color: var(--text-dim); }
-    footer.site-footer a:hover { color: var(--accent); }
+    .cta-card {
+      background: linear-gradient(135deg, rgba(45,212,191,0.10), rgba(6,182,212,0.10));
+      border: 1px solid rgba(45,212,191,0.25);
+      border-radius: var(--r-2xl);
+      padding: 56px 32px;
+      text-align: center;
+    }
+    .cta-card h2 { font-size: 36px; font-weight: 700; color: white; margin: 0 0 16px 0; letter-spacing: -0.01em; }
+    .cta-card p { font-size: 16px; color: var(--text-dim); margin: 0 0 32px 0; }
   </style>
 </head>
-<body>
-  <header class="topbar">
-    <a href="/" class="brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">KeyVault Sidekick</span>
-      <span class="brand-sub">/ VibeProSoft</span>
-    </a>
-    <div class="topbar-actions" id="topbar-actions">
-      <a href="/login.html" class="btn">Sign in</a>
-    </div>
-  </header>
+<body class="bg-gradient-page">
 
-  <main>
+  <div class="orbs">
+    <div class="orb orb-tl"></div>
+    <div class="orb orb-br"></div>
+  </div>
+
+  <div class="page-content">
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">KeyVault Sidekick</span>
+          <span class="brand-sub">by VibeProSoft</span>
+        </span>
+      </a>
+      <div class="topbar-actions" id="topbar-actions">
+        <a href="https://github.com/boblauzon/keyvault-sidekick" target="_blank" rel="noopener" class="btn ghost" aria-label="GitHub" title="GitHub">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.332-5.467-5.93 0-1.31.465-2.38 1.235-3.22-.135-.302-.54-1.52.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.656.24 2.874.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57 4.77-1.59 8.205-6.085 8.205-11.385 0-6.627-5.373-12-12-12"/></svg>
+        </a>
+        <a href="/login.html" class="btn">Sign in</a>
+      </div>
+    </header>
+
     <section class="hero">
       <div>
-        <span class="hero-eyebrow">Invitation-only · Audited · v1.5.2</span>
-        <h1>Your API keys, encrypted in <span class="accent">your browser</span>. Never on a server.</h1>
+        <span class="pill"><span class="pulse-dot"></span> Invitation-only · Audited · v2.0.2</span>
+        <h1>Your API keys,<br><span class="gradient-text">encrypted locally</span>.</h1>
         <p class="lede">
-          KeyVault Sidekick is a secrets vault purpose-built for solo vibe coders.
-          One vault per project. Generators for JWT secrets, UUIDs, and API key patterns.
-          One-click <code>.env</code> export. Auto-clear clipboard.
-          And keys that, by construction, never leave your device.
+          Browser-only encrypted secrets vault for solo developers. Zero backend, zero sign-up,
+          zero breach surface. Keys never leave your device.
         </p>
         <div class="hero-cta">
-          <a href="/login.html" class="btn primary large">Sign in</a>
-          <a href="#how" class="btn large">How it works ↓</a>
+          <a href="/login.html" class="btn primary large">Open Vault
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="#features" class="btn large">Learn more</a>
+        </div>
+        <div class="hero-trust">
+          <div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> AES-256-GCM</div>
+          <div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> PBKDF2 310k</div>
+          <div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Zero backend</div>
         </div>
       </div>
-      <div class="hero-vault-preview" aria-label="Vault preview">
-        <div class="vault-header">ITIL Sidekick · 4 keys</div>
-        <div class="vault-row">
-          <div><span class="vault-name">STRIPE_API_KEY</span><span class="vault-type">api_key</span></div>
-          <span class="vault-value">••••••••••••</span>
-        </div>
-        <div class="vault-row">
-          <div><span class="vault-name">CLERK_SECRET</span><span class="vault-type">secret</span></div>
-          <span class="vault-value">••••••••••••</span>
-        </div>
-        <div class="vault-row">
-          <div><span class="vault-name">CLOUDFLARE_TOKEN</span><span class="vault-type">api_key</span></div>
-          <span class="vault-value">••••••••••••</span>
-        </div>
-        <div class="vault-row">
-          <div><span class="vault-name">DATABASE_URL</span><span class="vault-type">other</span></div>
-          <span class="vault-value">••••••••••••</span>
+
+      <div class="vault-preview-wrap">
+        <div class="vault-preview-glow"></div>
+        <div class="vault-preview">
+          <div class="vault-header">
+            <div>
+              <div class="vault-header-meta">Project</div>
+              <div class="vault-header-project"><span class="vault-color-dot"></span> ITIL Sidekick</div>
+            </div>
+            <div class="vault-header-count">4 keys</div>
+          </div>
+          <div class="vault-key">
+            <div class="vault-key-top">
+              <span class="vault-key-name">STRIPE_API_KEY</span>
+              <span class="badge badge-accent">api_key</span>
+            </div>
+            <div class="vault-key-value">••••••••••••••••</div>
+          </div>
+          <div class="vault-key">
+            <div class="vault-key-top">
+              <span class="vault-key-name">CLERK_SECRET_KEY</span>
+              <span class="badge badge-danger">secret</span>
+            </div>
+            <div class="vault-key-value">••••••••••••••••</div>
+          </div>
+          <div class="vault-key">
+            <div class="vault-key-top">
+              <span class="vault-key-name">CLOUDFLARE_TOKEN</span>
+              <span class="badge badge-accent">api_key</span>
+            </div>
+            <div class="vault-key-value">••••••••••••••••</div>
+          </div>
+          <div class="vault-key">
+            <div class="vault-key-top">
+              <span class="vault-key-name">DATABASE_URL</span>
+              <span class="badge">other</span>
+            </div>
+            <div class="vault-key-value">••••••••••••••••</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="how">
+    <section id="features">
       <div class="section-wrap">
-        <h2>How it works</h2>
-        <h3>Open. Encrypt. Generate. Export.</h3>
-        <div class="how-grid">
-          <div class="how-step">
-            <div class="how-step-num">1</div>
-            <div class="how-step-title">Pick a master password</div>
-            <div class="how-step-desc">PBKDF2 (310,000 iterations) derives an AES-256-GCM key. Nothing is sent anywhere.</div>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">2</div>
-            <div class="how-step-title">Organize by project</div>
-            <div class="how-step-desc">One vault, many projects. ITIL Sidekick, Velocity, your side project — each gets its own group.</div>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">3</div>
-            <div class="how-step-title">Generate or paste</div>
-            <div class="how-step-desc">7 built-in generators: JWT secret, UUID, hex, base64url, API key pattern, bcrypt rounds, password.</div>
-          </div>
-          <div class="how-step">
-            <div class="how-step-num">4</div>
-            <div class="how-step-title">Export to Claude Code</div>
-            <div class="how-step-desc">One click: <code>.env</code>, <code>.envrc</code>, or <code>settings.json</code>. Clipboard auto-clears after 30s.</div>
-          </div>
+        <div class="section-heading">
+          <span class="section-eyebrow">Features</span>
+          <h2>Everything you need</h2>
+          <p>Built for solo developers who value simplicity and security.</p>
         </div>
-      </div>
-    </section>
-
-    <section class="security-bg">
-      <div class="section-wrap">
-        <h2>Security model</h2>
-        <h3>The vault is your browser. Always.</h3>
-        <div class="sec-grid">
-          <div class="sec-card">
-            <div class="sec-card-icon">🔐</div>
-            <div class="sec-card-title">AES-256-GCM</div>
-            <div class="sec-card-desc">Industry-standard authenticated encryption. A tampered blob fails to decrypt cleanly.</div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+            <h3>Military-grade encryption</h3>
+            <p>AES-256-GCM with PBKDF2 key derivation. Your master password never leaves the browser.</p>
           </div>
-          <div class="sec-card">
-            <div class="sec-card-icon">🔑</div>
-            <div class="sec-card-title">PBKDF2 310k</div>
-            <div class="sec-card-desc">Master password derived with the OWASP 2024 iteration count. Brute-forcing a stolen blob is computationally expensive.</div>
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            <h3>Lightning fast</h3>
+            <p>No sign-up, no sync, no waiting. Open and use instantly. Everything runs locally.</p>
           </div>
-          <div class="sec-card">
-            <div class="sec-card-icon">🚫</div>
-            <div class="sec-card-title">No network egress</div>
-            <div class="sec-card-desc">CSP <code>connect-src 'none'</code> on the vault page — by browser policy, no outbound HTTP from the app.</div>
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
+            <h3>7 built-in generators</h3>
+            <p>JWT secrets, UUIDs, API keys, passwords, and more. Save directly to projects.</p>
           </div>
-          <div class="sec-card">
-            <div class="sec-card-icon">📋</div>
-            <div class="sec-card-title">Clipboard auto-clear</div>
-            <div class="sec-card-desc">Copied a key? Clipboard wipes after 30s. Conditional — only clears if it still contains your value.</div>
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+            <h3>One-click export</h3>
+            <p>Export to <code>.env</code>, <code>.envrc</code>, or <code>settings.json</code>. Perfect for Claude Code.</p>
           </div>
-          <div class="sec-card">
-            <div class="sec-card-icon">⏱</div>
-            <div class="sec-card-title">Auto-lock on idle</div>
-            <div class="sec-card-desc">15-minute idle timer by default. The derived key is cleared from memory on lock.</div>
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h3>Project organization</h3>
+            <p>Group keys by project. Search, filter, archive. Keep your secrets organized.</p>
           </div>
-          <div class="sec-card">
-            <div class="sec-card-icon">🔍</div>
-            <div class="sec-card-title">Auditable source</div>
-            <div class="sec-card-desc">Single HTML file, no minification, no bundled deps. SHA-256 published with every release.</div>
+          <div class="feature-card">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <h3>Auto-lock &amp; clipboard clear</h3>
+            <p>Configurable idle timeout and automatic clipboard clearing after copying secrets.</p>
           </div>
         </div>
       </div>
@@ -253,54 +284,67 @@
 
     <section>
       <div class="section-wrap">
-        <h2>Built for Claude Code</h2>
-        <h3>Generate a Stripe key with Claude. Save it to your vault in one click.</h3>
-        <div class="use-cases-grid">
+        <div class="section-heading">
+          <span class="section-eyebrow">Claude Code integration</span>
+          <h2>Built for the way you work</h2>
+          <p>Claude creates a Stripe key via MCP. KeyVault opens with the value pre-filled. You confirm. Done.</p>
+        </div>
+        <div class="uc-grid">
           <div class="uc-card">
             <h4>Prefill from MCP</h4>
-            <p>Claude creates a key via Stripe, Cloudflare, or any MCP tool and navigates your browser to a special URL. The vault auto-opens a pre-filled "Save key" modal. The secret never appears in your chat.</p>
-            <div class="uc-code">https://keyvault-sidekick.pages.dev/app.html#action=prefill<br>&nbsp;&nbsp;&amp;name=STRIPE_KEY&amp;value=sk_live_xxx<br>&nbsp;&nbsp;&amp;type=api_key&amp;project=ITIL+Sidekick</div>
+            <p>Claude creates a key via Stripe, Cloudflare, or any MCP tool, then navigates your browser to a special URL. The vault auto-opens a pre-filled "Save key" modal. The secret never appears in your chat.</p>
+            <div class="uc-code">https://keyvault-sidekick.pages.dev/app.html
+  #action=prefill
+  &amp;name=STRIPE_KEY
+  &amp;value=sk_live_xxx
+  &amp;project=ITIL+Sidekick</div>
           </div>
           <div class="uc-card">
             <h4>Direct .env export</h4>
             <p>Pick a project, pick keys, pick a format. Hit Copy or Download. Open Claude Code, paste into <code>.env</code>. Total time: under 10 seconds.</p>
-            <div class="uc-code">STRIPE_API_KEY='sk_live_xxx'<br>CLERK_SECRET_KEY='sk_clerk_xxx'<br>DATABASE_URL='postgres://localhost/mydb'</div>
+            <div class="uc-code">STRIPE_API_KEY='sk_live_xxx'
+CLERK_SECRET_KEY='sk_clerk_xxx'
+DATABASE_URL='postgres://localhost/mydb'</div>
           </div>
         </div>
       </div>
     </section>
 
     <section class="cta-section">
-      <div class="section-wrap">
-        <h2>Get access</h2>
-        <h3 style="margin: 0 auto 24px auto;">KeyVault Sidekick is invitation-only during early access.</h3>
-        <p style="max-width: 540px; margin: 0 auto 28px auto; color: var(--text-dim); font-size: 14px;">
-          Have an invitation? Sign in below. Want one? Reach out to
-          <a href="mailto:rob.lauzon@vibeprosoft.com">rob.lauzon@vibeprosoft.com</a>.
+      <div class="cta-card">
+        <h2>Ready to secure your keys?</h2>
+        <p>KeyVault Sidekick is invitation-only during early access.</p>
+        <a href="/login.html" class="btn primary large">Sign in
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <p style="margin-top: 20px; font-size: 13px; color: var(--text-mute);">
+          Don't have access yet? Email <a href="mailto:rob.lauzon@vibeprosoft.com">rob.lauzon@vibeprosoft.com</a>.
         </p>
-        <a href="/login.html" class="btn primary large">Sign in</a>
       </div>
     </section>
-  </main>
 
-  <footer class="site-footer">
-    <div>© 2026 VibeProSoft · <a href="https://github.com/boblauzon/keyvault-sidekick">GitHub</a> · <a href="https://github.com/boblauzon/keyvault-sidekick/releases">Releases</a></div>
-    <div>v1.5.2 · audited 2026-06-08</div>
-  </footer>
+    <footer class="site-footer">
+      <div>© 2026 VibeProSoft · <a href="https://github.com/boblauzon/keyvault-sidekick">GitHub</a> · <a href="https://github.com/boblauzon/keyvault-sidekick/releases">Releases</a></div>
+      <div>v2.0.2 · Audited 2026-06-08</div>
+    </footer>
+  </div>
 
   <script>
-    // If a session cookie is present, swap "Sign in" → "Open vault"
     fetch('/api/auth/me', { credentials: 'same-origin' }).then(async r => {
       if (r.ok) {
         const { user } = await r.json();
         const actions = document.getElementById('topbar-actions');
         actions.innerHTML = `
-          <span style="color:var(--text-mute); font-family: var(--mono); font-size: 11px; margin-right:8px">${user.email}</span>
+          <a href="https://github.com/boblauzon/keyvault-sidekick" target="_blank" rel="noopener" class="btn ghost" aria-label="GitHub" title="GitHub">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.332-5.467-5.93 0-1.31.465-2.38 1.235-3.22-.135-.302-.54-1.52.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.656.24 2.874.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57 4.77-1.59 8.205-6.085 8.205-11.385 0-6.627-5.373-12-12-12"/></svg>
+          </a>
+          <span style="color:var(--text-mute); font-family: var(--mono); font-size: 11px; padding: 0 4px;">${escapeHtml(user.email)}</span>
           ${user.role === 'superadmin' ? '<a href="/admin.html" class="btn">Admin</a>' : ''}
           <a href="/app.html" class="btn primary">Open vault →</a>
         `;
       }
     }).catch(()=>{});
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   </script>
 </body>
 </html>
