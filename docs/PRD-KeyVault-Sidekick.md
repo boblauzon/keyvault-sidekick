@@ -280,6 +280,16 @@ Salt and IV are unique per save operation. The master password is never stored o
   - Security: URL fragment not sent to HTTP server; value lives in sessionStorage only until modal confirm/skip; sessionStorage cleared on first read
   - Verified end-to-end: hash stripped → unlock → modal auto-opens with correct name/type/notes/project → key saved to vault → `totalKeys` incremented
 
+### Phase 9 — Figma design system port (v2.1.0) — SHIPPED 2026-06-08
+Visual refresh ported from the React/Vite/Tailwind reference design in `Designs/Improve GitHub User Experience/` to the existing vanilla HTML + Pages Functions architecture. **Zero framework migration** — every page still loads as plain HTML, no build step, no React.
+- New `public/shared.css` with slate-950 + teal-400/cyan-500 gradient palette, design tokens (radius, shadows), utility classes for pill+pulse-dot, gradient-text, card-elevated with backdrop-blur, animated gradient orbs (CSS-only, blur-96px, 8s pulse)
+- Pages restyled: `index.html` (full hero redesign with 60px gradient text + 4-key vault preview + 6-card features grid + CTA section), `login.html` (centered card with gradient lock icon + show/hide toggle + trust footer), `invite.html` (loading/invalid/accept three-state), `admin.html` (audit log filter UI w/ teal/danger action colors), `account.html` (eyebrow + page title pattern + 4-bar strength meter)
+- Vault `app.html`: ONLY topbar updated (new gradient brand mark w/ lock SVG); vault body stays utilitarian (power tool aesthetic preserved)
+- Inline SVG icons replace need for Lucide React (zero external deps maintained)
+- Backend code: zero changes — all auth, abuse protection, audit, change password, session versioning, vault page logic untouched
+- launch.json updated to serve `public/` for preview
+- Verified end-to-end: login + admin endpoints still 200, layout math centered (460px card at x=410 in 1280px viewport)
+
 ### Phase 7.6 — Account settings + change password (v2.0.2) — SHIPPED 2026-06-08
 Closes the Phase 7 polish gap: signed-in users can now change their own login password.
 - **New endpoint**: POST /api/auth/change-password — verifies current pw, enforces strength, re-encrypts, bumps session_version, re-issues caller a fresh cookie, rate-limited, CSRF-checked, audit-logged
