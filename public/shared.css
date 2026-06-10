@@ -103,7 +103,7 @@ code {
   position: relative;
   background: radial-gradient(ellipse at top, var(--slate-900) 0%, var(--slate-950) 60%);
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;   /* Hide orb horizontal overflow only — vertical scrolling must work. */
 }
 .orbs { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
 .orb {

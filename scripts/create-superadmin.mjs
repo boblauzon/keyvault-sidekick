@@ -57,7 +57,12 @@ const hash = await pbkdf2(password, salt, PBKDF2_ITERATIONS);
 const id = randomUUID();
 const ts = new Date().toISOString();
 
-const sql = `INSERT INTO users (id, email, password_hash, salt, iterations, role, status, created_at) VALUES ('${id}', '${email}', '${bytesToBase64Url(hash)}', '${bytesToBase64Url(salt)}', ${PBKDF2_ITERATIONS}, 'superadmin', 'active', '${ts}');`;
+// VC-SEC-03: escape any single quotes in user-supplied email to prevent SQL
+// injection if someone bootstraps with a quote in the email arg. The other
+// fields (id=UUID, hash/salt=base64url, ts=ISO, iterations=int) can't contain
+// quotes — but defense-in-depth is cheap, so escape them all.
+function sqlQuote(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
+const sql = `INSERT INTO users (id, email, password_hash, salt, iterations, role, status, created_at) VALUES (${sqlQuote(id)}, ${sqlQuote(email)}, ${sqlQuote(bytesToBase64Url(hash))}, ${sqlQuote(bytesToBase64Url(salt))}, ${PBKDF2_ITERATIONS}, 'superadmin', 'active', ${sqlQuote(ts)});`;
 
 console.log(`Creating superadmin: ${email}`);
 console.log(`  id: ${id}`);
