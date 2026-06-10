@@ -7,10 +7,22 @@
   <title>Quick Connect · KeyVault Sidekick</title>
   <link rel="stylesheet" href="/shared.css">
   <style>
-    main { max-width: 880px; margin: 0 auto; padding: 40px 24px 100px; position: relative; z-index: 1; }
+    main { max-width: 920px; margin: 0 auto; padding: 40px 24px 100px; position: relative; z-index: 1; }
     .page-eyebrow { font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--teal-400); margin-bottom: 6px; }
     .page-title { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0; }
-    .page-lede { color: var(--text-dim); margin: 12px 0 0 0; font-size: 15px; line-height: 1.6; max-width: 640px; }
+    .page-lede { color: var(--text-dim); margin: 12px 0 0 0; font-size: 15px; line-height: 1.6; max-width: 700px; }
+
+    .how-it-works {
+      background: rgba(96,165,250,0.05);
+      border: 1px solid rgba(96,165,250,0.25);
+      border-radius: var(--r-xl);
+      padding: 22px 26px; margin: 32px 0;
+    }
+    .how-it-works h3 { margin: 0 0 12px 0; font-size: 14px; color: var(--info); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .how-it-works p { margin: 0 0 8px 0; color: var(--text-dim); font-size: 13px; line-height: 1.65; }
+    .how-it-works p:last-child { margin-bottom: 0; }
+    .how-it-works strong { color: white; }
+    .how-it-works code { font-size: 11px; }
 
     .option-card {
       background: rgba(15,23,42,0.5);
@@ -23,85 +35,115 @@
       background: linear-gradient(135deg, rgba(45,212,191,0.04), rgba(6,182,212,0.04)), rgba(15,23,42,0.5);
     }
 
-    .option-header {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      gap: 16px; margin-bottom: 8px;
-    }
-    .option-meta { flex: 1; }
     .option-title {
-      font-size: 18px; font-weight: 600; color: white; margin: 0 0 6px 0;
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 20px; font-weight: 700; color: white; margin: 0 0 6px 0;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap; letter-spacing: -0.01em;
     }
-    .option-desc { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0 0 18px 0; }
+    .option-desc { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0 0 22px 0; }
 
+    /* The 2-step install block */
+    .install-flow {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 720px) { .install-flow { grid-template-columns: 1fr; } }
+
+    .install-step {
+      background: rgba(2,6,23,0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 18px 20px;
+      display: flex; flex-direction: column;
+    }
+    .install-step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal-400), var(--cyan-500));
+      color: white; font-family: var(--mono); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .install-step-title {
+      font-size: 14px; font-weight: 600; color: white;
+      margin: 0 0 4px 0;
+    }
+    .install-step-detail {
+      font-size: 12px; color: var(--text-dim); line-height: 1.55;
+      margin: 0 0 14px 0; flex: 1;
+    }
+
+    .code-mini {
+      background: rgba(2,6,23,0.65); border: 1px solid var(--border-strong);
+      border-radius: var(--r-md); padding: 10px 12px;
+      font-family: var(--mono); font-size: 11px; line-height: 1.5;
+      color: var(--teal-300);
+      overflow-x: auto; word-break: break-word;
+      white-space: pre-wrap;
+      margin: 0 0 10px 0;
+    }
+    .code-mini .cm { color: var(--text-mute); }
+
+    .step-btn {
+      padding: 8px 14px;
+      font-size: 12px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+      align-self: flex-start;
+    }
+    .copy-feedback-mini {
+      font-family: var(--mono); font-size: 11px; color: var(--ok);
+      opacity: 0; transition: opacity 0.2s ease;
+      margin-left: 8px;
+    }
+    .copy-feedback-mini.visible { opacity: 1; }
+
+    /* Snippet preview (collapsed by default) */
+    .snippet-preview {
+      margin-top: 14px;
+    }
+    .snippet-preview summary {
+      cursor: pointer; font-size: 12px; color: var(--text-mute);
+      font-family: var(--mono); padding: 6px 0;
+      user-select: none;
+    }
+    .snippet-preview summary:hover { color: var(--text-dim); }
+    .snippet-preview summary::-webkit-details-marker { color: var(--teal-400); }
     .code-block {
       background: rgba(2,6,23,0.6); border: 1px solid var(--border-strong);
       border-radius: var(--r-lg);
-      padding: 16px 18px;
-      font-family: var(--mono); font-size: 12px; line-height: 1.7;
+      padding: 14px 16px; margin-top: 10px;
+      font-family: var(--mono); font-size: 11px; line-height: 1.7;
       color: var(--slate-300);
-      max-height: 360px; overflow-y: auto;
+      max-height: 280px; overflow-y: auto;
       white-space: pre-wrap; word-break: break-word;
-      position: relative;
     }
     .code-block .kw { color: var(--teal-400); }
     .code-block .cm { color: var(--text-mute); }
-    .code-block .str { color: var(--cyan-400); }
-    .code-block .hl { color: var(--purple); }
 
-    .copy-row {
-      margin-top: 16px;
-      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    /* Test it section */
+    .test-card {
+      background: linear-gradient(135deg, rgba(45,212,191,0.05), rgba(6,182,212,0.05));
+      border: 1px solid rgba(45,212,191,0.25);
+      border-radius: var(--r-xl);
+      padding: 22px 24px; margin-top: 32px;
     }
-    .copy-btn {
-      padding: 10px 18px;
-      font-size: 13px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 8px;
-    }
-    .copy-feedback {
-      font-family: var(--mono); font-size: 12px; color: var(--ok);
-      opacity: 0; transition: opacity 0.2s ease;
-    }
-    .copy-feedback.visible { opacity: 1; }
-
-    .steps {
-      background: rgba(2,6,23,0.4); border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      padding: 18px 22px; margin-top: 14px;
-    }
-    .steps > div { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
-    .steps > div:last-child { margin-bottom: 0; }
-    .steps .num {
-      flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-      background: rgba(45,212,191,0.15); color: var(--teal-400);
-      font-family: var(--mono); font-size: 11px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      margin-top: 1px;
-    }
-    .steps .step-body {
-      font-size: 13px; color: var(--text-dim); line-height: 1.6;
-    }
-    .steps .step-body strong { color: var(--text); }
-    .steps .step-body code { font-size: 11px; }
-
-    .info-callout {
-      background: rgba(96,165,250,0.05);
-      border: 1px solid rgba(96,165,250,0.25);
-      border-left: 3px solid var(--info);
-      border-radius: var(--r-md);
-      padding: 14px 16px; margin: 32px 0;
-      font-size: 13px; color: var(--text-dim); line-height: 1.6;
-    }
-    .info-callout strong { color: white; }
-
+    .test-card h3 { margin: 0 0 6px 0; font-size: 16px; color: white; font-weight: 700; }
+    .test-card p { margin: 0 0 12px 0; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
     .test-prompt {
-      background: linear-gradient(135deg, rgba(45,212,191,0.06), rgba(6,182,212,0.06));
-      border: 1px solid rgba(45,212,191,0.3);
-      border-radius: var(--r-lg);
-      padding: 18px 22px;
-      font-family: var(--mono); font-size: 13px; line-height: 1.7;
+      background: rgba(2,6,23,0.6); border: 1px solid rgba(45,212,191,0.3);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.7;
       color: var(--teal-300);
-      margin: 14px 0;
+      position: relative;
+      margin: 0 0 12px 0;
+    }
+    .test-prompt-copy {
+      position: absolute; top: 10px; right: 10px;
+      padding: 4px 10px; font-size: 11px;
+    }
+
+    .os-note {
+      font-size: 11px; color: var(--text-mute); margin-top: 8px;
+      font-family: var(--mono);
     }
   </style>
 </head>
@@ -132,147 +174,210 @@
     </header>
 
     <main>
-      <div style="margin-bottom: 32px;">
+      <div style="margin-bottom: 16px;">
         <div class="page-eyebrow">⚡ Quick Connect</div>
         <h1 class="page-title">Connect Claude Code to your vault</h1>
         <p class="page-lede">
-          Three ways to give Claude the integration instructions. Pick one, click <strong style="color:white">Copy</strong>, and paste where indicated. After that, Claude will know how to send keys to your vault for the rest of the session — or forever, depending on which option you pick.
+          Pick the option that fits how you use Claude, then follow the
+          two steps. After that, ask Claude to save a secret to your vault
+          and your browser pops the prefill modal.
         </p>
       </div>
 
+      <div class="how-it-works">
+        <h3>What this actually does</h3>
+        <p>
+          Claude Code reads instruction files (<code>CLAUDE.md</code>) on every
+          session. The snippet below tells Claude how to build a special URL that
+          opens your vault with a key pre-filled. Once Claude knows that, you can
+          say <strong>"save this key to my vault"</strong> and Claude runs
+          <code>start "" "URL"</code> (Windows) to open your browser straight
+          to the Save Key modal.
+        </p>
+        <p style="margin-top: 8px;">
+          <strong>You only set this up once.</strong> The hosted Connect page (this
+          page) doesn't talk to Claude — it just gives you the text to paste.
+        </p>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <!-- OPTION A: CLAUDE.md (recommended) -->
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card recommended">
-        <div class="option-header">
-          <div class="option-meta">
-            <h2 class="option-title">
-              CLAUDE.md memory
-              <span class="badge badge-accent">RECOMMENDED · PERMANENT</span>
-            </h2>
-            <p class="option-desc">Paste once into your CLAUDE.md file. Claude reads it on every session — you only set this up once. Best if you'll use KeyVault regularly across many projects.</p>
-          </div>
-        </div>
+        <h2 class="option-title">
+          Option 1 · CLAUDE.md memory
+          <span class="badge badge-accent">RECOMMENDED</span>
+        </h2>
+        <p class="option-desc">
+          Best for everyday use. Paste the snippet into Claude Code's memory
+          file once — Claude will know about KeyVault on every future session,
+          across every project.
+        </p>
 
-        <div class="steps">
-          <div>
-            <div class="num">1</div>
-            <div class="step-body">Click <strong>Copy</strong> below.</div>
-          </div>
-          <div>
-            <div class="num">2</div>
-            <div class="step-body">
-              Open your CLAUDE.md file. Locations Claude Code checks (in order):
-              <code style="display:block; margin-top:6px;">~/.claude/CLAUDE.md</code>
-              <code style="display:block; margin-top:4px;">&lt;project-root&gt;/CLAUDE.md</code>
-              The home directory one applies to every project. Project-root applies only when you're in that dir.
+        <div class="install-flow">
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-title">Copy the snippet</div>
+            <div class="install-step-detail">Puts the integration instructions on your clipboard.</div>
+            <div style="display:flex; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="primary step-btn copy-btn" data-target="md">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy snippet
+              </button>
+              <span class="copy-feedback-mini" id="fb-md">✓ Copied</span>
             </div>
           </div>
-          <div>
-            <div class="num">3</div>
-            <div class="step-body">Paste at the bottom. Save the file.</div>
+
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-title">Paste into CLAUDE.md</div>
+            <div class="install-step-detail">
+              Easiest: paste this PowerShell one-liner — it appends your
+              clipboard to your CLAUDE.md, no editor needed:
+            </div>
+            <div class="code-mini" id="install-cmd-md"><span class="cm"># Windows / PowerShell:</span>
+Get-Clipboard | Add-Content -Path "$HOME\.claude\CLAUDE.md" -Encoding UTF8</div>
+            <div style="display:flex; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="step-btn copy-cmd" data-cmd="md">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy install command
+              </button>
+              <span class="copy-feedback-mini" id="fb-cmd-md">✓ Copied — paste in PowerShell</span>
+            </div>
+            <div class="os-note">
+              macOS / Linux: <code style="font-size: 11px;">pbpaste >> ~/.claude/CLAUDE.md</code> or <code style="font-size: 11px;">xclip -o -selection clipboard >> ~/.claude/CLAUDE.md</code>
+            </div>
           </div>
         </div>
 
-        <div class="code-block" id="code-md"></div>
-        <div class="copy-row">
-          <button type="button" class="primary copy-btn" data-target="md">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            Copy CLAUDE.md snippet
-          </button>
-          <span class="copy-feedback" id="fb-md">✓ Copied — now paste into your CLAUDE.md</span>
-        </div>
+        <details class="snippet-preview">
+          <summary>Preview what gets pasted (click to expand)</summary>
+          <div class="code-block" id="code-md"></div>
+        </details>
       </div>
 
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <!-- OPTION B: Session prompt -->
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card">
-        <div class="option-header">
-          <div class="option-meta">
-            <h2 class="option-title">
-              One-shot session prompt
-              <span class="badge">QUICK · NO SAVE</span>
-            </h2>
-            <p class="option-desc">Paste as your first message in a Claude Code session. Claude remembers it for the rest of that chat — but you'll need to paste again next time. Good for trying it out before committing to CLAUDE.md.</p>
+        <h2 class="option-title">
+          Option 2 · Paste in chat
+          <span class="badge">EASIEST · ONE SESSION ONLY</span>
+        </h2>
+        <p class="option-desc">
+          Try-it-out path. No file editing — just paste a message in Claude.
+          Works for the rest of that chat only; next time you start a new
+          session you'd paste again. Best for testing the integration before
+          committing to Option 1.
+        </p>
+
+        <div class="install-flow">
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-title">Copy the prompt</div>
+            <div class="install-step-detail">A complete prompt that teaches Claude in one message.</div>
+            <div style="display:flex; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="primary step-btn copy-btn" data-target="session">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy prompt
+              </button>
+              <span class="copy-feedback-mini" id="fb-session">✓ Copied</span>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-title">Paste as first message</div>
+            <div class="install-step-detail">
+              In Claude Code, start a new chat (or use <code>/clear</code>
+              first), paste the prompt, send. Claude will acknowledge and
+              be ready to save keys for the rest of that session.
+            </div>
           </div>
         </div>
 
-        <div class="steps">
-          <div>
-            <div class="num">1</div>
-            <div class="step-body">Click <strong>Copy</strong> below.</div>
-          </div>
-          <div>
-            <div class="num">2</div>
-            <div class="step-body">In Claude Code, paste as your very first message in a new session.</div>
-          </div>
-          <div>
-            <div class="num">3</div>
-            <div class="step-body">Claude will acknowledge — then start asking for keys.</div>
-          </div>
-        </div>
-
-        <div class="code-block" id="code-session"></div>
-        <div class="copy-row">
-          <button type="button" class="primary copy-btn" data-target="session">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            Copy session prompt
-          </button>
-          <span class="copy-feedback" id="fb-session">✓ Copied — paste as your first message</span>
-        </div>
+        <details class="snippet-preview">
+          <summary>Preview what gets pasted</summary>
+          <div class="code-block" id="code-session"></div>
+        </details>
       </div>
 
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <!-- OPTION C: Slash command -->
+      <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card">
-        <div class="option-header">
-          <div class="option-meta">
-            <h2 class="option-title">
-              Slash command
-              <span class="badge badge-purple">POWER USER</span>
-            </h2>
-            <p class="option-desc">Save as a Claude Code slash command. Then any time you type <code>/keyvault-save KEY_NAME value [type] [project]</code> Claude will open KeyVault with that key prefilled. Great muscle-memory for power users.</p>
-          </div>
-        </div>
+        <h2 class="option-title">
+          Option 3 · Slash command
+          <span class="badge badge-purple">POWER USER</span>
+        </h2>
+        <p class="option-desc">
+          Adds a <code>/keyvault-save</code> command to Claude Code. Type
+          <code>/keyvault-save STRIPE_KEY sk_live_xxx api_key "ITIL Sidekick"</code>
+          and Claude saves the key with one command. Great muscle memory.
+        </p>
 
-        <div class="steps">
-          <div>
-            <div class="num">1</div>
-            <div class="step-body">Click <strong>Copy</strong> below.</div>
-          </div>
-          <div>
-            <div class="num">2</div>
-            <div class="step-body">
-              Create the file at one of these paths and paste:
-              <code style="display:block; margin-top:6px;">~/.claude/commands/keyvault-save.md</code>
-              <code style="display:block; margin-top:4px;">&lt;project-root&gt;/.claude/commands/keyvault-save.md</code>
+        <div class="install-flow">
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-title">Copy the slash command</div>
+            <div class="install-step-detail">Markdown file content that becomes a Claude Code slash command.</div>
+            <div style="display:flex; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="primary step-btn copy-btn" data-target="slash">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy command
+              </button>
+              <span class="copy-feedback-mini" id="fb-slash">✓ Copied</span>
             </div>
           </div>
-          <div>
-            <div class="num">3</div>
-            <div class="step-body">
-              In Claude Code:
-              <code style="display:block; margin-top:6px;">/keyvault-save STRIPE_KEY sk_live_xxx api_key "ITIL Sidekick"</code>
+
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-title">Save to commands folder</div>
+            <div class="install-step-detail">
+              Paste this PowerShell command — it creates the folder if
+              missing and writes your clipboard to the right file:
+            </div>
+            <div class="code-mini" id="install-cmd-slash"><span class="cm"># Windows / PowerShell:</span>
+$d = "$HOME\.claude\commands"; New-Item -ItemType Directory -Path $d -Force | Out-Null
+Get-Clipboard | Set-Content -Path "$d\keyvault-save.md" -Encoding UTF8</div>
+            <div style="display:flex; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="step-btn copy-cmd" data-cmd="slash">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy install command
+              </button>
+              <span class="copy-feedback-mini" id="fb-cmd-slash">✓ Copied</span>
+            </div>
+            <div class="os-note">
+              macOS / Linux: <code style="font-size: 11px;">mkdir -p ~/.claude/commands && pbpaste > ~/.claude/commands/keyvault-save.md</code>
             </div>
           </div>
         </div>
 
-        <div class="code-block" id="code-slash"></div>
-        <div class="copy-row">
-          <button type="button" class="primary copy-btn" data-target="slash">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            Copy slash command
-          </button>
-          <span class="copy-feedback" id="fb-slash">✓ Copied — save as keyvault-save.md</span>
-        </div>
+        <details class="snippet-preview">
+          <summary>Preview what gets pasted</summary>
+          <div class="code-block" id="code-slash"></div>
+        </details>
       </div>
 
-      <div class="info-callout">
-        <strong>Prerequisite:</strong> You must be signed in to KeyVault Sidekick in the same browser where Claude will open the URL. Sessions last 30 days. If your session expires, the prefill URL will route through the login page first, then proceed to the vault with the key still pre-filled.
+      <!-- TEST IT NOW -->
+      <div class="test-card">
+        <h3>✓ Test it now</h3>
+        <p>
+          After setting up any of the 3 options above, start a new Claude Code
+          session (or use <code>/clear</code>) and paste this prompt:
+        </p>
+        <div class="test-prompt" id="test-prompt-text">Generate a 256-bit JWT signing secret and save it to KeyVault as TEST_JWT_SECRET in project "Test"<button type="button" class="primary test-prompt-copy" id="test-prompt-btn">Copy</button></div>
+        <p style="margin: 0;">
+          Claude should generate the value, run <code>start "" "URL"</code>, and
+          your browser should pop the KeyVault prefill modal with TEST_JWT_SECRET
+          filled in. Click <strong>Save key</strong> and check your vault.
+        </p>
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: var(--text-mute);">
+          Didn't open? Most likely Claude doesn't have the instructions yet — verify
+          your CLAUDE.md has the snippet (<code>type %USERPROFILE%\.claude\CLAUDE.md</code>),
+          or use <code>/clear</code> + re-paste the Option 2 session prompt.
+        </p>
       </div>
-
-      <h2 style="font-size: 22px; font-weight: 700; color: white; margin: 48px 0 16px 0; letter-spacing: -0.01em;">Try it now</h2>
-      <p style="color: var(--text-dim); margin: 0 0 16px 0;">After setting up any option above, ask Claude something like:</p>
-      <div class="test-prompt">"Generate a 256-bit JWT signing secret and save it to KeyVault as JWT_SECRET in project ITIL Sidekick"</div>
-      <p style="color: var(--text-dim); margin: 0; font-size: 13px;">
-        Claude will generate the value, build the prefill URL, run <code>start</code> (Windows) or <code>open</code> (macOS) / <code>xdg-open</code> (Linux), and your browser will pop the KeyVault prefill modal. Click <strong style="color:white">Save key</strong> and you're done.
-      </p>
     </main>
   </div>
 
@@ -286,7 +391,6 @@
       if (user.role === 'superadmin') $('admin-link').style.display = '';
     });
 
-    // ── Snippet content ───────────────────────────────────────────────────────
     const SNIPPETS = {
       md: `# KeyVault Sidekick integration
 
@@ -372,17 +476,18 @@ Steps:
 The user must already be signed in at ${BASE_URL}. Session lasts 30 days.`
     };
 
+    const INSTALL_CMDS = {
+      md: 'Get-Clipboard | Add-Content -Path "$HOME\\.claude\\CLAUDE.md" -Encoding UTF8',
+      slash: '$d = "$HOME\\.claude\\commands"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Get-Clipboard | Set-Content -Path "$d\\keyvault-save.md" -Encoding UTF8'
+    };
+
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
     function highlightCode(text) {
       let s = escapeHtml(text);
-      // Highlight URL
       s = s.replace(/(https?:\/\/[^\s&]+(?:#[^\s]*)?)/g, '<span class="kw">$1</span>');
-      // Highlight comments (# at start of line, or # after space)
       s = s.replace(/^(#.*)$/gm, '<span class="cm">$1</span>');
-      // Highlight inline code-like things
-      s = s.replace(/(\bSTRIPE_[A-Z_]+|\bCLERK_[A-Z_]+|\bsk_live[a-zA-Z0-9_]+)/g, '<span class="str">$1</span>');
       return s;
     }
 
@@ -390,29 +495,52 @@ The user must already be signed in at ${BASE_URL}. Session lasts 30 days.`
       $('code-' + key).innerHTML = highlightCode(SNIPPETS[key]);
     }
 
-    // ── Copy handlers ─────────────────────────────────────────────────────────
+    async function doCopy(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.style.position = 'fixed'; el.style.opacity = '0';
+        document.body.appendChild(el); el.select();
+        try { document.execCommand('copy'); el.remove(); return true; }
+        catch { el.remove(); return false; }
+      }
+    }
+
+    function flashFeedback(id) {
+      const fb = $(id);
+      if (!fb) return;
+      fb.classList.add('visible');
+      setTimeout(() => fb.classList.remove('visible'), 3500);
+    }
+
     document.querySelectorAll('.copy-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const target = btn.dataset.target;
-        try {
-          await navigator.clipboard.writeText(SNIPPETS[target]);
-          const fb = $('fb-' + target);
-          fb.classList.add('visible');
-          setTimeout(() => fb.classList.remove('visible'), 3500);
-        } catch {
-          // Fallback for browsers without clipboard API
-          const el = document.createElement('textarea');
-          el.value = SNIPPETS[target];
-          el.style.position = 'fixed'; el.style.opacity = '0';
-          document.body.appendChild(el);
-          el.select();
-          try { document.execCommand('copy'); } catch {}
-          el.remove();
-          const fb = $('fb-' + target);
-          fb.classList.add('visible');
-          setTimeout(() => fb.classList.remove('visible'), 3500);
-        }
+        const ok = await doCopy(SNIPPETS[target]);
+        if (ok) flashFeedback('fb-' + target);
       });
+    });
+
+    document.querySelectorAll('.copy-cmd').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const target = btn.dataset.cmd;
+        const ok = await doCopy(INSTALL_CMDS[target]);
+        if (ok) flashFeedback('fb-cmd-' + target);
+      });
+    });
+
+    $('test-prompt-btn').addEventListener('click', async () => {
+      const text = 'Generate a 256-bit JWT signing secret and save it to KeyVault as TEST_JWT_SECRET in project "Test"';
+      const ok = await doCopy(text);
+      if (ok) {
+        const btn = $('test-prompt-btn');
+        const oldText = btn.textContent;
+        btn.textContent = '✓ Copied';
+        setTimeout(() => { btn.textContent = oldText; }, 2000);
+      }
     });
 
     $('logout-btn').addEventListener('click', async () => {
