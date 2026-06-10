@@ -39,65 +39,77 @@
       font-size: 20px; font-weight: 700; color: white; margin: 0 0 6px 0;
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap; letter-spacing: -0.01em;
     }
-    .option-desc { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0 0 22px 0; }
+    .option-desc { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; }
 
-    /* The 2-step install block */
-    .install-flow {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-      margin-bottom: 20px;
+    /* Scope toggle */
+    .scope-toggle {
+      display: inline-flex; padding: 3px;
+      background: rgba(2,6,23,0.6); border: 1px solid var(--border);
+      border-radius: var(--r-md); margin-bottom: 18px;
     }
-    @media (max-width: 720px) { .install-flow { grid-template-columns: 1fr; } }
+    .scope-toggle button {
+      padding: 7px 14px; font-size: 12px;
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-dim); border-radius: var(--r-sm);
+      font-family: var(--mono); cursor: pointer; gap: 0;
+    }
+    .scope-toggle button.active {
+      background: rgba(45,212,191,0.12); color: var(--teal-400);
+      border-color: rgba(45,212,191,0.3);
+    }
+    .scope-toggle button:hover:not(.active) { color: var(--text); }
 
-    .install-step {
+    /* OS tabs */
+    .os-tabs {
+      display: flex; gap: 4px; margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .os-tab {
+      padding: 8px 14px; font-size: 12px;
+      background: transparent; border: 1px solid transparent; border-bottom: none;
+      color: var(--text-dim); cursor: pointer;
+      font-family: var(--mono); border-radius: var(--r-sm) var(--r-sm) 0 0;
+      margin-bottom: -1px;
+    }
+    .os-tab.active {
+      color: var(--teal-400); border-color: var(--border) var(--border) transparent;
       background: rgba(2,6,23,0.5);
-      border: 1px solid var(--border);
-      border-radius: var(--r-xl);
-      padding: 18px 20px;
-      display: flex; flex-direction: column;
-    }
-    .install-step-num {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--teal-400), var(--cyan-500));
-      color: white; font-family: var(--mono); font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 12px;
-    }
-    .install-step-title {
-      font-size: 14px; font-weight: 600; color: white;
-      margin: 0 0 4px 0;
-    }
-    .install-step-detail {
-      font-size: 12px; color: var(--text-dim); line-height: 1.55;
-      margin: 0 0 14px 0; flex: 1;
     }
 
+    /* Code blocks */
     .code-mini {
-      background: rgba(2,6,23,0.65); border: 1px solid var(--border-strong);
-      border-radius: var(--r-md); padding: 10px 12px;
-      font-family: var(--mono); font-size: 11px; line-height: 1.5;
+      background: rgba(2,6,23,0.7); border: 1px solid var(--border-strong);
+      border-radius: var(--r-md); padding: 14px 16px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.55;
       color: var(--teal-300);
       overflow-x: auto; word-break: break-word;
       white-space: pre-wrap;
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
+      position: relative;
+    }
+    .code-mini.with-copy { padding-right: 90px; min-height: 56px; }
+    .code-mini-copy {
+      position: absolute; top: 8px; right: 8px;
+      padding: 6px 12px; font-size: 11px;
     }
     .code-mini .cm { color: var(--text-mute); }
 
-    .step-btn {
-      padding: 8px 14px;
-      font-size: 12px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 6px;
-      align-self: flex-start;
+    .install-helper {
+      font-size: 12px; color: var(--text-dim); line-height: 1.6;
+      margin: 0 0 12px 0;
     }
-    .copy-feedback-mini {
-      font-family: var(--mono); font-size: 11px; color: var(--ok);
-      opacity: 0; transition: opacity 0.2s ease;
-      margin-left: 8px;
-    }
-    .copy-feedback-mini.visible { opacity: 1; }
+    .install-helper strong { color: white; }
+    .install-helper code { font-size: 11px; }
 
-    /* Snippet preview (collapsed by default) */
-    .snippet-preview {
-      margin-top: 14px;
+    .scope-panel { display: none; }
+    .scope-panel.active { display: block; }
+    .os-panel { display: none; }
+    .os-panel.active { display: block; }
+
+    /* Manual fallback */
+    .manual-section {
+      margin-top: 14px; padding-top: 16px;
+      border-top: 1px solid var(--border);
     }
     .snippet-preview summary {
       cursor: pointer; font-size: 12px; color: var(--text-mute);
@@ -105,7 +117,6 @@
       user-select: none;
     }
     .snippet-preview summary:hover { color: var(--text-dim); }
-    .snippet-preview summary::-webkit-details-marker { color: var(--teal-400); }
     .code-block {
       background: rgba(2,6,23,0.6); border: 1px solid var(--border-strong);
       border-radius: var(--r-lg);
@@ -118,7 +129,15 @@
     .code-block .kw { color: var(--teal-400); }
     .code-block .cm { color: var(--text-mute); }
 
-    /* Test it section */
+    .manual-copy-btn { font-size: 12px; padding: 7px 12px; margin-top: 8px; }
+    .copy-feedback-mini {
+      font-family: var(--mono); font-size: 11px; color: var(--ok);
+      opacity: 0; transition: opacity 0.2s ease;
+      margin-left: 8px;
+    }
+    .copy-feedback-mini.visible { opacity: 1; }
+
+    /* Test card */
     .test-card {
       background: linear-gradient(135deg, rgba(45,212,191,0.05), rgba(6,182,212,0.05));
       border: 1px solid rgba(45,212,191,0.25);
@@ -141,10 +160,16 @@
       padding: 4px 10px; font-size: 11px;
     }
 
-    .os-note {
-      font-size: 11px; color: var(--text-mute); margin-top: 8px;
-      font-family: var(--mono);
+    .security-note {
+      margin-top: 32px; padding: 18px 22px;
+      background: rgba(15,23,42,0.5); border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      font-size: 13px; color: var(--text-dim); line-height: 1.65;
     }
+    .security-note strong { color: white; }
+    .security-note code { font-size: 11px; }
+    .security-note ul { padding-left: 18px; margin: 8px 0 0 0; }
+    .security-note li { margin-bottom: 4px; }
   </style>
 </head>
 <body class="bg-gradient-page">
@@ -178,184 +203,201 @@
         <div class="page-eyebrow">⚡ Quick Connect</div>
         <h1 class="page-title">Connect Claude Code to your vault</h1>
         <p class="page-lede">
-          Pick the option that fits how you use Claude, then follow the
-          two steps. After that, ask Claude to save a secret to your vault
-          and your browser pops the prefill modal.
+          One paste into your terminal and Claude knows how to send keys
+          to your vault. Choose <strong>Project</strong> (this repo only)
+          or <strong>Global</strong> (every Claude Code session, everywhere).
         </p>
       </div>
 
       <div class="how-it-works">
-        <h3>What this actually does</h3>
+        <h3>What happens when you paste the command</h3>
         <p>
-          Claude Code reads instruction files (<code>CLAUDE.md</code>) on every
-          session. The snippet below tells Claude how to build a special URL that
-          opens your vault with a key pre-filled. Once Claude knows that, you can
-          say <strong>"save this key to my vault"</strong> and Claude runs
-          <code>start "" "URL"</code> (Windows) to open your browser straight
-          to the Save Key modal.
-        </p>
-        <p style="margin-top: 8px;">
-          <strong>You only set this up once.</strong> The hosted Connect page (this
-          page) doesn't talk to Claude — it just gives you the text to paste.
+          Each install command does just two things: <strong>(1)</strong> downloads
+          a plain-text instruction snippet from
+          <code>keyvault-sidekick.pages.dev/snippets/...</code>, and
+          <strong>(2)</strong> writes it to a file Claude Code reads. <strong>The
+          fetched content is data, never executed.</strong> You can inspect it any
+          time by visiting the URL or running <code>irm URL</code> alone.
         </p>
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION A: CLAUDE.md (recommended) -->
+      <!-- OPTION 1: CLAUDE.md (recommended) -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <div class="option-card recommended">
+      <div class="option-card recommended" id="option-claude-md">
         <h2 class="option-title">
           Option 1 · CLAUDE.md memory
           <span class="badge badge-accent">RECOMMENDED</span>
         </h2>
         <p class="option-desc">
-          Best for everyday use. Paste the snippet into Claude Code's memory
-          file once — Claude will know about KeyVault on every future session,
-          across every project.
+          Claude Code reads <code>CLAUDE.md</code> on every session.
+          One install command appends the KeyVault snippet so Claude
+          knows the URL format forever.
         </p>
 
-        <div class="install-flow">
-          <div class="install-step">
-            <div class="install-step-num">1</div>
-            <div class="install-step-title">Copy the snippet</div>
-            <div class="install-step-detail">Puts the integration instructions on your clipboard.</div>
-            <div style="display:flex; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="primary step-btn copy-btn" data-target="md">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy snippet
-              </button>
-              <span class="copy-feedback-mini" id="fb-md">✓ Copied</span>
-            </div>
+        <div class="scope-toggle" data-option="md">
+          <button type="button" data-scope="project" class="active">Project (./CLAUDE.md)</button>
+          <button type="button" data-scope="global">Global (~/.claude/CLAUDE.md)</button>
+        </div>
+
+        <!-- PROJECT scope -->
+        <div class="scope-panel active" data-scope-panel="md-project">
+          <div class="install-helper">
+            <strong>Step 1:</strong> Open your terminal <strong>in the project root</strong>.
+            <strong>Step 2:</strong> Paste the one-line install.
           </div>
 
-          <div class="install-step">
-            <div class="install-step-num">2</div>
-            <div class="install-step-title">Paste into CLAUDE.md</div>
-            <div class="install-step-detail">
-              Easiest: paste this PowerShell one-liner — it appends your
-              clipboard to your CLAUDE.md, no editor needed:
+          <div class="os-tabs" data-os-tabs="md-project">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="md-project-win">
+            <div class="code-mini with-copy" data-cmd="md-project-win">irm https://keyvault-sidekick.pages.dev/snippets/claude-md.txt | Add-Content -Path .\CLAUDE.md -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="md-project-win">Copy</button>
             </div>
-            <div class="code-mini" id="install-cmd-md"><span class="cm"># Windows / PowerShell:</span>
-Get-Clipboard | Add-Content -Path "$HOME\.claude\CLAUDE.md" -Encoding UTF8</div>
-            <div style="display:flex; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="step-btn copy-cmd" data-cmd="md">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy install command
-              </button>
-              <span class="copy-feedback-mini" id="fb-cmd-md">✓ Copied — paste in PowerShell</span>
-            </div>
-            <div class="os-note">
-              macOS / Linux: <code style="font-size: 11px;">pbpaste >> ~/.claude/CLAUDE.md</code> or <code style="font-size: 11px;">xclip -o -selection clipboard >> ~/.claude/CLAUDE.md</code>
+          </div>
+          <div class="os-panel" data-os-panel="md-project-mac">
+            <div class="code-mini with-copy" data-cmd="md-project-mac">curl -fsSL https://keyvault-sidekick.pages.dev/snippets/claude-md.txt >> ./CLAUDE.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="md-project-mac">Copy</button>
             </div>
           </div>
         </div>
 
-        <details class="snippet-preview">
-          <summary>Preview what gets pasted (click to expand)</summary>
+        <!-- GLOBAL scope -->
+        <div class="scope-panel" data-scope-panel="md-global">
+          <div class="install-helper">
+            Works from anywhere. Affects every project you use Claude Code in.
+          </div>
+
+          <div class="os-tabs" data-os-tabs="md-global">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="md-global-win">
+            <div class="code-mini with-copy" data-cmd="md-global-win">New-Item -ItemType Directory -Path "$HOME\.claude" -Force | Out-Null; irm https://keyvault-sidekick.pages.dev/snippets/claude-md.txt | Add-Content -Path "$HOME\.claude\CLAUDE.md" -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="md-global-win">Copy</button>
+            </div>
+          </div>
+          <div class="os-panel" data-os-panel="md-global-mac">
+            <div class="code-mini with-copy" data-cmd="md-global-mac">mkdir -p ~/.claude && curl -fsSL https://keyvault-sidekick.pages.dev/snippets/claude-md.txt >> ~/.claude/CLAUDE.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="md-global-mac">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <details class="manual-section snippet-preview">
+          <summary>Manual install — copy + paste yourself</summary>
+          <p class="install-helper" style="margin-top: 10px;">
+            View the raw snippet at <a href="/snippets/claude-md.txt" target="_blank">/snippets/claude-md.txt</a>,
+            or copy the content below into <code>./CLAUDE.md</code> or <code>~/.claude/CLAUDE.md</code>:
+          </p>
           <div class="code-block" id="code-md"></div>
+          <button type="button" class="manual-copy-btn copy-btn" data-target="md">Copy snippet to clipboard</button>
+          <span class="copy-feedback-mini" id="fb-md">✓ Copied</span>
         </details>
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION B: Session prompt -->
+      <!-- OPTION 2: Session prompt -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <div class="option-card">
+      <div class="option-card" id="option-session">
         <h2 class="option-title">
           Option 2 · Paste in chat
           <span class="badge">EASIEST · ONE SESSION ONLY</span>
         </h2>
         <p class="option-desc">
-          Try-it-out path. No file editing — just paste a message in Claude.
-          Works for the rest of that chat only; next time you start a new
-          session you'd paste again. Best for testing the integration before
-          committing to Option 1.
+          Try-it-out path. No file editing — paste once at the start of
+          a Claude chat. Works for that session only.
         </p>
-
-        <div class="install-flow">
-          <div class="install-step">
-            <div class="install-step-num">1</div>
-            <div class="install-step-title">Copy the prompt</div>
-            <div class="install-step-detail">A complete prompt that teaches Claude in one message.</div>
-            <div style="display:flex; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="primary step-btn copy-btn" data-target="session">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy prompt
-              </button>
-              <span class="copy-feedback-mini" id="fb-session">✓ Copied</span>
-            </div>
-          </div>
-
-          <div class="install-step">
-            <div class="install-step-num">2</div>
-            <div class="install-step-title">Paste as first message</div>
-            <div class="install-step-detail">
-              In Claude Code, start a new chat (or use <code>/clear</code>
-              first), paste the prompt, send. Claude will acknowledge and
-              be ready to save keys for the rest of that session.
-            </div>
-          </div>
+        <div class="install-helper">
+          <strong>Step 1:</strong> Click Copy. <strong>Step 2:</strong>
+          In Claude Code, start a new chat (or use <code>/clear</code>) and paste as your first message.
         </div>
+        <button type="button" class="primary copy-btn" data-target="session" style="padding: 12px 22px;">Copy session prompt</button>
+        <span class="copy-feedback-mini" id="fb-session">✓ Copied — paste in Claude Code</span>
 
-        <details class="snippet-preview">
-          <summary>Preview what gets pasted</summary>
+        <details class="manual-section snippet-preview">
+          <summary>Preview what you're copying</summary>
           <div class="code-block" id="code-session"></div>
         </details>
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION C: Slash command -->
+      <!-- OPTION 3: Slash command -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <div class="option-card">
+      <div class="option-card" id="option-slash">
         <h2 class="option-title">
           Option 3 · Slash command
           <span class="badge badge-purple">POWER USER</span>
         </h2>
         <p class="option-desc">
-          Adds a <code>/keyvault-save</code> command to Claude Code. Type
-          <code>/keyvault-save STRIPE_KEY sk_live_xxx api_key "ITIL Sidekick"</code>
-          and Claude saves the key with one command. Great muscle memory.
+          Adds a <code>/keyvault-save KEY_NAME value [type] [project]</code>
+          command to Claude Code. Great muscle memory.
         </p>
 
-        <div class="install-flow">
-          <div class="install-step">
-            <div class="install-step-num">1</div>
-            <div class="install-step-title">Copy the slash command</div>
-            <div class="install-step-detail">Markdown file content that becomes a Claude Code slash command.</div>
-            <div style="display:flex; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="primary step-btn copy-btn" data-target="slash">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy command
-              </button>
-              <span class="copy-feedback-mini" id="fb-slash">✓ Copied</span>
-            </div>
+        <div class="scope-toggle" data-option="slash">
+          <button type="button" data-scope="project" class="active">Project (./.claude/commands/)</button>
+          <button type="button" data-scope="global">Global (~/.claude/commands/)</button>
+        </div>
+
+        <!-- PROJECT scope -->
+        <div class="scope-panel active" data-scope-panel="slash-project">
+          <div class="install-helper">
+            <strong>From the project root</strong>, paste one of these:
           </div>
 
-          <div class="install-step">
-            <div class="install-step-num">2</div>
-            <div class="install-step-title">Save to commands folder</div>
-            <div class="install-step-detail">
-              Paste this PowerShell command — it creates the folder if
-              missing and writes your clipboard to the right file:
+          <div class="os-tabs" data-os-tabs="slash-project">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="slash-project-win">
+            <div class="code-mini with-copy" data-cmd="slash-project-win">New-Item -ItemType Directory -Path .\.claude\commands -Force | Out-Null; irm https://keyvault-sidekick.pages.dev/snippets/slash-command.md | Set-Content -Path .\.claude\commands\keyvault-save.md -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="slash-project-win">Copy</button>
             </div>
-            <div class="code-mini" id="install-cmd-slash"><span class="cm"># Windows / PowerShell:</span>
-$d = "$HOME\.claude\commands"; New-Item -ItemType Directory -Path $d -Force | Out-Null
-Get-Clipboard | Set-Content -Path "$d\keyvault-save.md" -Encoding UTF8</div>
-            <div style="display:flex; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="step-btn copy-cmd" data-cmd="slash">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy install command
-              </button>
-              <span class="copy-feedback-mini" id="fb-cmd-slash">✓ Copied</span>
-            </div>
-            <div class="os-note">
-              macOS / Linux: <code style="font-size: 11px;">mkdir -p ~/.claude/commands && pbpaste > ~/.claude/commands/keyvault-save.md</code>
+          </div>
+          <div class="os-panel" data-os-panel="slash-project-mac">
+            <div class="code-mini with-copy" data-cmd="slash-project-mac">mkdir -p ./.claude/commands && curl -fsSL https://keyvault-sidekick.pages.dev/snippets/slash-command.md -o ./.claude/commands/keyvault-save.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="slash-project-mac">Copy</button>
             </div>
           </div>
         </div>
 
-        <details class="snippet-preview">
-          <summary>Preview what gets pasted</summary>
+        <!-- GLOBAL scope -->
+        <div class="scope-panel" data-scope-panel="slash-global">
+          <div class="install-helper">
+            Available in every Claude Code session, everywhere.
+          </div>
+
+          <div class="os-tabs" data-os-tabs="slash-global">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="slash-global-win">
+            <div class="code-mini with-copy" data-cmd="slash-global-win">New-Item -ItemType Directory -Path "$HOME\.claude\commands" -Force | Out-Null; irm https://keyvault-sidekick.pages.dev/snippets/slash-command.md | Set-Content -Path "$HOME\.claude\commands\keyvault-save.md" -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="slash-global-win">Copy</button>
+            </div>
+          </div>
+          <div class="os-panel" data-os-panel="slash-global-mac">
+            <div class="code-mini with-copy" data-cmd="slash-global-mac">mkdir -p ~/.claude/commands && curl -fsSL https://keyvault-sidekick.pages.dev/snippets/slash-command.md -o ~/.claude/commands/keyvault-save.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="slash-global-mac">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <details class="manual-section snippet-preview">
+          <summary>Manual install</summary>
+          <p class="install-helper" style="margin-top: 10px;">
+            View raw snippet at <a href="/snippets/slash-command.md" target="_blank">/snippets/slash-command.md</a>.
+            Save into <code>./.claude/commands/keyvault-save.md</code> (project) or
+            <code>~/.claude/commands/keyvault-save.md</code> (global).
+          </p>
           <div class="code-block" id="code-slash"></div>
+          <button type="button" class="manual-copy-btn copy-btn" data-target="slash">Copy snippet to clipboard</button>
+          <span class="copy-feedback-mini" id="fb-slash">✓ Copied</span>
         </details>
       </div>
 
@@ -363,27 +405,32 @@ Get-Clipboard | Set-Content -Path "$d\keyvault-save.md" -Encoding UTF8</div>
       <div class="test-card">
         <h3>✓ Test it now</h3>
         <p>
-          After setting up any of the 3 options above, start a new Claude Code
-          session (or use <code>/clear</code>) and paste this prompt:
+          After installing any option above, start a new Claude Code session
+          (or use <code>/clear</code>) and paste this:
         </p>
         <div class="test-prompt" id="test-prompt-text">Generate a 256-bit JWT signing secret and save it to KeyVault as TEST_JWT_SECRET in project "Test"<button type="button" class="primary test-prompt-copy" id="test-prompt-btn">Copy</button></div>
         <p style="margin: 0;">
-          Claude should generate the value, run <code>start "" "URL"</code>, and
-          your browser should pop the KeyVault prefill modal with TEST_JWT_SECRET
-          filled in. Click <strong>Save key</strong> and check your vault.
+          Claude generates the value, runs <code>start "" "URL"</code>, and your
+          browser pops the prefill modal with the key filled in. Click
+          <strong>Save key</strong> and check your vault.
         </p>
-        <p style="margin: 12px 0 0 0; font-size: 12px; color: var(--text-mute);">
-          Didn't open? Most likely Claude doesn't have the instructions yet — verify
-          your CLAUDE.md has the snippet (<code>type %USERPROFILE%\.claude\CLAUDE.md</code>),
-          or use <code>/clear</code> + re-paste the Option 2 session prompt.
-        </p>
+      </div>
+
+      <div class="security-note">
+        <strong>About the one-line installer's safety:</strong>
+        <ul>
+          <li><code>irm URL | Add-Content</code> and <code>curl URL >> file</code> only <strong>write</strong> the response to a file — they never <strong>execute</strong> it. This is data, not a remote script.</li>
+          <li>The URLs point to <code>keyvault-sidekick.pages.dev/snippets/...</code>, the same origin you signed into. If you trust this site enough to store your secrets here, fetching plain-text instructions from it is the same trust level.</li>
+          <li>You can preview the exact text before running: <code>irm https://keyvault-sidekick.pages.dev/snippets/claude-md.txt</code></li>
+          <li>The snippets contain no secrets, no keys, and no executable code — only instructions for Claude.</li>
+          <li>Running the install twice will duplicate the entry. <code>Add-Content</code> appends; <code>Set-Content</code> overwrites. Adjust if you re-run.</li>
+        </ul>
       </div>
     </main>
   </div>
 
   <script>
     const $ = id => document.getElementById(id);
-    const BASE_URL = 'https://keyvault-sidekick.pages.dev';
 
     fetch('/api/auth/me', { credentials: 'same-origin' }).then(async r => {
       if (!r.ok) { window.location.href = '/login.html'; return; }
@@ -391,115 +438,36 @@ Get-Clipboard | Set-Content -Path "$d\keyvault-save.md" -Encoding UTF8</div>
       if (user.role === 'superadmin') $('admin-link').style.display = '';
     });
 
+    // Static snippets are now hosted at /snippets/* — but we still expose them
+    // here for the "Manual install" preview + copy fallback.
     const SNIPPETS = {
-      md: `# KeyVault Sidekick integration
-
-When the user asks to "save a key to KeyVault", "send to my vault",
-"save this secret", "store this in KeyVault", or similar:
-
-1. URL-encode the name, value, type, project, and notes.
-2. Build:
-   ${BASE_URL}/app.html#action=prefill&name=<N>&value=<V>&type=<T>&project=<P>&notes=<X>
-
-   Where:
-     <N> = URL-encoded key name (e.g. STRIPE_API_KEY)
-     <V> = URL-encoded secret value
-     <T> = one of: api_key, secret, token, oauth, webhook, other
-           (default: api_key)
-     <P> = URL-encoded project name (ask user if not provided)
-     <X> = URL-encoded notes (optional)
-
-3. Open in the user's default browser via Bash:
-     start "" "<URL>"     # Windows
-     open "<URL>"         # macOS
-     xdg-open "<URL>"     # Linux
-
-4. Confirm to the user: "Opening KeyVault — review and click Save key
-   in the prefill modal."
-
-Notes:
-- The user must already be signed in at ${BASE_URL}.
-- If they aren't, the URL routes through login first, then opens the
-  prefill modal automatically.
-- The secret value appears in the Claude chat, the shell command, and
-  the browser URL bar (~100ms). For maximum-secrecy keys, the user
-  should paste directly into the vault Add Key form instead.`,
-
-      session: `I'm using KeyVault Sidekick (${BASE_URL}) as my secrets vault.
-
-When I ask you to save a secret to my vault, please:
-
-1. URL-encode the name, value, type, project, and notes.
-2. Build this URL:
-   ${BASE_URL}/app.html#action=prefill&name=<N>&value=<V>&type=<T>&project=<P>&notes=<X>
-
-   Where <T> is one of: api_key, secret, token, oauth, webhook, other
-   (default: api_key). Ask me for the project name if I don't supply one.
-
-3. Open the URL in my default browser:
-     start "" "<URL>"     # Windows
-     open "<URL>"         # macOS
-     xdg-open "<URL>"     # Linux
-
-4. Tell me: "Opening KeyVault — review and click Save key."
-
-I'm already signed in at ${BASE_URL} in my browser, so the prefill modal
-should open immediately. Acknowledge that you understand and I'll start
-giving you keys to save.`,
-
-      slash: `---
-description: Save a secret to KeyVault Sidekick via the prefill URL
-allowed-tools: Bash
----
-
-Save a secret to KeyVault Sidekick.
-
-Arguments from the user: $ARGUMENTS
-
-Expected format: <KEY_NAME> <VALUE> [type] [project]
-
-Example: \`/keyvault-save STRIPE_API_KEY sk_live_xxx api_key "ITIL Sidekick"\`
-
-Steps:
-1. Parse $ARGUMENTS. The KEY_NAME and VALUE are required. type defaults
-   to 'api_key'. project, if provided, may be quoted with spaces inside.
-2. If KEY_NAME or VALUE is missing, ask the user.
-3. URL-encode each component.
-4. Build the URL:
-   ${BASE_URL}/app.html#action=prefill&name=<N>&value=<V>&type=<T>&project=<P>
-5. Open in default browser via Bash:
-     start "" "<URL>"     # Windows
-     open "<URL>"         # macOS
-     xdg-open "<URL>"     # Linux
-6. Confirm to the user: "Opening KeyVault — review and click Save key."
-
-The user must already be signed in at ${BASE_URL}. Session lasts 30 days.`
+      md: null, session: null, slash: null
     };
-
-    const INSTALL_CMDS = {
-      md: 'Get-Clipboard | Add-Content -Path "$HOME\\.claude\\CLAUDE.md" -Encoding UTF8',
-      slash: '$d = "$HOME\\.claude\\commands"; New-Item -ItemType Directory -Path $d -Force | Out-Null; Get-Clipboard | Set-Content -Path "$d\\keyvault-save.md" -Encoding UTF8'
+    const SNIPPET_URLS = {
+      md: '/snippets/claude-md.txt',
+      session: '/snippets/session-prompt.txt',
+      slash: '/snippets/slash-command.md'
     };
-
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
     function highlightCode(text) {
       let s = escapeHtml(text);
-      s = s.replace(/(https?:\/\/[^\s&]+(?:#[^\s]*)?)/g, '<span class="kw">$1</span>');
+      s = s.replace(/(https?:\/\/[^\s&<]+(?:#[^\s<]*)?)/g, '<span class="kw">$1</span>');
       s = s.replace(/^(#.*)$/gm, '<span class="cm">$1</span>');
       return s;
     }
-
     for (const key of Object.keys(SNIPPETS)) {
-      $('code-' + key).innerHTML = highlightCode(SNIPPETS[key]);
+      fetch(SNIPPET_URLS[key]).then(r => r.text()).then(text => {
+        SNIPPETS[key] = text;
+        const el = $('code-' + key);
+        if (el) el.innerHTML = highlightCode(text);
+      });
     }
 
     async function doCopy(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch {
         const el = document.createElement('textarea');
         el.value = text;
         el.style.position = 'fixed'; el.style.opacity = '0';
@@ -516,30 +484,72 @@ The user must already be signed in at ${BASE_URL}. Session lasts 30 days.`
       setTimeout(() => fb.classList.remove('visible'), 3500);
     }
 
+    // ── Scope toggle ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.scope-toggle').forEach(toggle => {
+      const opt = toggle.dataset.option;
+      toggle.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const scope = btn.dataset.scope;
+          document.querySelectorAll(`[data-scope-panel^="${opt}-"]`).forEach(p => p.classList.remove('active'));
+          document.querySelector(`[data-scope-panel="${opt}-${scope}"]`)?.classList.add('active');
+        });
+      });
+    });
+
+    // ── OS tabs ──────────────────────────────────────────────────────────────
+    document.querySelectorAll('.os-tabs').forEach(tabs => {
+      const prefix = tabs.dataset.osTabs;
+      tabs.querySelectorAll('.os-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.querySelectorAll('.os-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const os = tab.dataset.os;
+          document.querySelectorAll(`[data-os-panel^="${prefix}-"]`).forEach(p => p.classList.remove('active'));
+          document.querySelector(`[data-os-panel="${prefix}-${os}"]`)?.classList.add('active');
+        });
+      });
+    });
+
+    // ── Install command copy ─────────────────────────────────────────────────
+    document.querySelectorAll('.install-copy').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const codeBlock = btn.closest('.code-mini');
+        // Extract text but strip the embedded "Copy" button text
+        const clone = codeBlock.cloneNode(true);
+        clone.querySelectorAll('button').forEach(b => b.remove());
+        const text = clone.textContent.trim();
+        const ok = await doCopy(text);
+        if (ok) {
+          const old = btn.textContent;
+          btn.textContent = '✓ Copied';
+          setTimeout(() => { btn.textContent = old; }, 1800);
+        }
+      });
+    });
+
+    // ── Manual snippet copy ──────────────────────────────────────────────────
     document.querySelectorAll('.copy-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const target = btn.dataset.target;
-        const ok = await doCopy(SNIPPETS[target]);
+        let text = SNIPPETS[target];
+        if (!text) text = await fetch(SNIPPET_URLS[target]).then(r => r.text());
+        const ok = await doCopy(text);
         if (ok) flashFeedback('fb-' + target);
       });
     });
 
-    document.querySelectorAll('.copy-cmd').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const target = btn.dataset.cmd;
-        const ok = await doCopy(INSTALL_CMDS[target]);
-        if (ok) flashFeedback('fb-cmd-' + target);
-      });
-    });
-
+    // ── Test prompt copy ─────────────────────────────────────────────────────
     $('test-prompt-btn').addEventListener('click', async () => {
       const text = 'Generate a 256-bit JWT signing secret and save it to KeyVault as TEST_JWT_SECRET in project "Test"';
       const ok = await doCopy(text);
       if (ok) {
         const btn = $('test-prompt-btn');
-        const oldText = btn.textContent;
+        const old = btn.textContent;
         btn.textContent = '✓ Copied';
-        setTimeout(() => { btn.textContent = oldText; }, 2000);
+        setTimeout(() => { btn.textContent = old; }, 1800);
       }
     });
 

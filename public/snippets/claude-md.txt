@@ -1,0 +1,33 @@
+
+# KeyVault Sidekick integration
+
+When the user asks to "save a key to KeyVault", "send to my vault",
+"save this secret", "store this in KeyVault", or similar:
+
+1. URL-encode the name, value, type, project, and notes.
+2. Build:
+   https://keyvault-sidekick.pages.dev/app.html#action=prefill&name=<N>&value=<V>&type=<T>&project=<P>&notes=<X>
+
+   Where:
+     <N> = URL-encoded key name (e.g. STRIPE_API_KEY)
+     <V> = URL-encoded secret value
+     <T> = one of: api_key, secret, token, oauth, webhook, other
+           (default: api_key)
+     <P> = URL-encoded project name (ask user if not provided)
+     <X> = URL-encoded notes (optional)
+
+3. Open in the user's default browser via Bash:
+     start "" "<URL>"     # Windows
+     open "<URL>"         # macOS
+     xdg-open "<URL>"     # Linux
+
+4. Confirm to the user: "Opening KeyVault — review and click Save key
+   in the prefill modal."
+
+Notes:
+- The user must already be signed in at https://keyvault-sidekick.pages.dev.
+- If they aren't, the URL routes through login first, then opens the
+  prefill modal automatically.
+- The secret value appears in the Claude chat, the shell command, and
+  the browser URL bar (~100ms). For maximum-secrecy keys, the user
+  should paste directly into the vault Add Key form instead.
