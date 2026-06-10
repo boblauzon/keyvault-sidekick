@@ -1218,6 +1218,7 @@
       function setStatusChip(state) {
         // User pill (right of everything) — shown whenever auth is known
         const userPill = __currentUser ? `
+          <a href="/connect.html" class="btn-help" title="Quick Connect to Claude Code" aria-label="Quick Connect" style="font-size: 13px; padding: 4px 8px;">⚡</a>
           <a href="/account.html" class="user-pill" title="Account settings — ${escapeHtml(__currentUser.email)}">
             ${escapeHtml(__currentUser.email)}
             ${__currentUser.role === 'superadmin' ? '<span class="user-pill-admin">ADMIN</span>' : ''}
