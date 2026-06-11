@@ -171,6 +171,23 @@ KeyVault Sidekick is **free and open**. If it saves you time, you can support it
 
 No accounts, no paywalls, no upsells. Donations are entirely optional and keep the tool free for everyone.
 
+## Legal
+
+KeyVault Sidekick is free, open-source, and provided **as is**. Please read:
+
+| Document | What it covers |
+|---|---|
+| [LICENSE](LICENSE) | MIT License — use, copy, modify, distribute freely; no warranty, no liability |
+| [TERMS.md](TERMS.md) | Terms of Use — "as is", limitation of liability, your responsibility for your master password + backups, governing law (Ontario, Canada) |
+| [PRIVACY.md](PRIVACY.md) | Privacy Policy — we collect **nothing**; your secrets never leave your device |
+| [SECURITY.md](SECURITY.md) | How to report a vulnerability (private disclosure) |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Expectations for contributors |
+
+**The short version:** your secrets are yours, encrypted on your device, under
+your sole control. There's no recovery if you lose your master password — keep
+a `.vault` backup. We provide no warranty and accept no liability; you use it
+at your own risk.
+
 ## Part of VibeProSoft
 
 Built by [VibeProSoft](https://vibeprosoft.com) — tools for solo vibe coders.

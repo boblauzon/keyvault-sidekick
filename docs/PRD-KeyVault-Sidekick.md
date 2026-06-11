@@ -212,6 +212,22 @@ Salt and IV are unique per save operation. The master password is never stored o
 
 ## 10. Build Plan
 
+### Phase 12 — Vibe-code audit remediation + legal/compliance pack (v3.2) — 2026-06-11
+Ran `/vibe-code-audit` against the v3.1 codebase. **Verdict: Go** — exceptionally clean (zero `eval`/`new Function`/`Math.random`/`console.log`/hardcoded secrets; zero runtime deps; AES-GCM + 310k PBKDF2; defensive `escapeHtml` on every user-controlled value; explicit-whitelist deserialization). Only 5 Low/Info hardening findings, all fixed here:
+- **VC-SEC-05 Low** — added tight `Content-Security-Policy` meta to `index.html` (`connect-src 'none'`) and `connect.html` (`connect-src 'self'` for snippet fetches). The vault already had one; the landing/onboarding pages did not.
+- **VC-SEC-06 Low** — `importVaultFile` now early-rejects files > 25 MB (`MAX_VAULT_IMPORT_BYTES`) before `FileReader`/`JSON.parse`, preventing a tab OOM from an oversized `.vault`.
+- **VC-SEC-04 Info** — pinned `wrangler` devDep `^4.96.0` → exact `4.98.0` for reproducible deploys.
+- **VC-SEC-06 Info** — `validateAndNormalizeVault` now validates per-project and per-key shape (drops entries missing an `id`/`name`/`value`, coerces unknown `type` → `other`, backfills timestamps). Defensive against backup corruption / version drift (not a security boundary — anyone with a valid blob already has the master password).
+- Verified end-to-end on localhost:8091: vault create→add→lock→unlock round-trip preserves data through the new validation; connect.html still fetches snippets under the new CSP; landing renders clean under `connect-src 'none'`; zero console errors.
+
+**Legal / compliance pack** (the "EULA + protection" ask):
+- `LICENSE` — MIT (AS-IS / no-warranty / no-liability is the core legal shield).
+- `TERMS.md` — Terms of Use: as-is, limitation of liability (max recoverable = CAD $0), user responsibility for master password + backups, acceptable use, Ko-fi donations voluntary + non-refundable, third-party (Cloudflare/GitHub/Ko-fi) disclosure, governing law = Ontario, Canada, right to change/discontinue.
+- `PRIVACY.md` — "we collect nothing" pinned down legally: no accounts/cookies/analytics/telemetry; vault content never leaves device; Cloudflare CDN access-log disclosure; GDPR/CCPA/PIPEDA (nothing to delete); COPPA (not for under-13).
+- `SECURITY.md` — private vuln disclosure path (rob.lauzon@vibeprosoft.com / GitHub advisory), scope, response SLAs, safe harbor, no monetary bounty.
+- `CODE_OF_CONDUCT.md` — paraphrased Contributor-Covenant-spirit (kept neutral; the verbatim Covenant's explicit-examples enumeration trips output content filters).
+- Docs live in repo root (GitHub community-health detection requires LICENSE/SECURITY/CODE_OF_CONDUCT there). Landing footer + README link to the GitHub-rendered copies (Pages serves only `public/`).
+
 ### Phase 11 — One-click handoff + ChatGPT Codex parity (v3.1) — 2026-06-11
 Reduces the effort to provide AI agents with keys (or generate new ones) to a single click, and adds ChatGPT Codex CLI as a first-class peer to Claude Code on the Quick Connect page.
 

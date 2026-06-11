@@ -740,7 +740,7 @@
       </span>
       <span class="appfoot-item">
         <button type="button" class="appfoot-link" id="appfoot-verify">Verify ↗</button>
-        <span class="appfoot-version">v3.1 · Free &amp; open</span>
+        <span class="appfoot-version">v3.2 · Free &amp; open</span>
       </span>
     </footer>
   </div>
@@ -1200,8 +1200,35 @@
         if (!vault || typeof vault !== 'object') throw new Error('Decrypted vault is not an object.');
         if (vault.version !== 1) throw new Error('Decrypted vault has unsupported version: ' + vault.version + '.');
         if (!Array.isArray(vault.projects)) vault.projects = [];
+
+        // SECURITY (VC-SEC-06): per-project + per-key shape validation. Anyone who
+        // can produce a valid decrypted blob already has the master password, so
+        // this is not a security boundary — it's defensive against backup
+        // corruption / version drift. Strategy: drop entries missing an id, then
+        // backfill optional fields with safe defaults; coerce unknown type to
+        // 'other' (the catch-all).
+        const VALID_TYPES = new Set(KEY_TYPES.map(t => t.id));
+        vault.projects = vault.projects.filter(p => p && typeof p === 'object' && typeof p.id === 'string' && p.id);
         for (const p of vault.projects) {
+          if (typeof p.name !== 'string')        p.name = 'Untitled';
+          if (typeof p.color !== 'string')       p.color = 'teal';
+          if (typeof p.description !== 'string') p.description = '';
+          if (typeof p.archived !== 'boolean')   p.archived = false;
+          if (typeof p.createdAt !== 'string')   p.createdAt = now();
+          if (typeof p.updatedAt !== 'string')   p.updatedAt = now();
           if (!Array.isArray(p.keys)) p.keys = [];
+          p.keys = p.keys.filter(k =>
+            k && typeof k === 'object' &&
+            typeof k.id === 'string' && k.id &&
+            typeof k.name === 'string' && k.name &&
+            typeof k.value === 'string'
+          );
+          for (const k of p.keys) {
+            if (!VALID_TYPES.has(k.type))        k.type = 'other';
+            if (typeof k.notes !== 'string')     k.notes = '';
+            if (typeof k.createdAt !== 'string') k.createdAt = now();
+            if (typeof k.updatedAt !== 'string') k.updatedAt = now();
+          }
         }
         return vault;
       }
@@ -3534,7 +3561,17 @@ py -3 -m http.server 8091
         showToast('Vault backup downloaded');
       }
 
+      // SECURITY (VC-SEC-06): hard cap on .vault import size. 25 MB is far above
+      // any realistic vault (typical ~5 KB even with hundreds of keys). Without
+      // this, an oversized/malicious file would tie up FileReader + JSON.parse
+      // and could OOM the tab. Single-user risk only but it's cheap to bound.
+      const MAX_VAULT_IMPORT_BYTES = 25 * 1024 * 1024;
+
       function importVaultFile(file) {
+        if (file.size > MAX_VAULT_IMPORT_BYTES) {
+          showToast('Vault file too large (max 25 MB).', 'err');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           try {

@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- CSP: this landing page makes ZERO network requests of its own. The Ko-fi
+       and GitHub links are plain <a href> navigations — no fetch, no script load.
+       connect-src 'none' is therefore enforceable here. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Browser-only AES-256-GCM encrypted secrets vault for solo vibe coders. Zero backend, zero sign-up. Keys never leave the device.">
   <meta name="referrer" content="no-referrer">
@@ -180,7 +184,7 @@
 
     <section class="hero">
       <div>
-        <span class="pill"><span class="pulse-dot"></span> Free &amp; open · Local-first · v3.1</span>
+        <span class="pill"><span class="pulse-dot"></span> Free &amp; open · Local-first · v3.2</span>
         <h1>Your API keys,<br><span class="gradient-text">encrypted locally</span>.</h1>
         <p class="lede">
           Browser-only encrypted secrets vault for solo developers. Zero backend, zero sign-up,
@@ -328,8 +332,15 @@ DATABASE_URL='postgres://localhost/mydb'</div>
     </section>
 
     <footer class="site-footer">
-      <div>© 2026 VibeProSoft · <a href="https://github.com/boblauzon/keyvault-sidekick">GitHub</a> · <a href="https://github.com/boblauzon/keyvault-sidekick/releases">Releases</a></div>
-      <div>v3.1 · Free &amp; open</div>
+      <div>
+        © 2026 VibeProSoft ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick">GitHub</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/PRIVACY.md">Privacy</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/TERMS.md">Terms</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/LICENSE">License</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/SECURITY.md">Security</a>
+      </div>
+      <div>v3.2 · Free &amp; open</div>
     </footer>
   </div>
 </body>
