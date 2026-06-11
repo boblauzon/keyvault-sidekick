@@ -212,6 +212,35 @@ Salt and IV are unique per save operation. The master password is never stored o
 
 ## 10. Build Plan
 
+### Phase 11 — One-click handoff + ChatGPT Codex parity (v3.1) — 2026-06-11
+Reduces the effort to provide AI agents with keys (or generate new ones) to a single click, and adds ChatGPT Codex CLI as a first-class peer to Claude Code on the Quick Connect page.
+
+**Vault — new project-view toolbar (when project has ≥1 key):**
+- **+ Quick generate ▾** — native `<details>` dropdown with 4 common (JWT/UUID/Password/API key) + 2 more (Random hex/base64) types. One click → uses the existing `Generators` module with sensible defaults (JWT 256-bit, password 24 chars all-classes, API key `sk-` + 40, etc.) → auto-incrementing default name (KEY → KEY_2 if taken) → saved to *this* project (no project picker), revealed by default. Bypasses the full Generator screen for the common case.
+- **Copy as .env** — one click → all project keys on clipboard as `KEY="value"` lines (POSIX shell-quoted via existing `shellQuote`). Skips the Export screen entirely.
+- **Hand off to AI ↗** — one click → paste-ready prompt copied: `Project: NAME` + non-echo guardrail line ("treat as env vars, don't echo/log/commit") + shell-quoted KEY=value lines. Works for **both** Claude Code & ChatGPT Codex (CLI and Cloud) — the only path that reaches Codex Cloud's sandboxed env where the prefill URL bridge can't pop the user's browser.
+
+**Vault — per-key row:**
+- New **.env** action button next to Copy/Edit/Delete. Copies `KEY="value"` for that one key (single shell-quoted line). Useful for adding one secret to an existing env without re-copying the whole project.
+
+**Vault helpers (added near `formatExportContent`):**
+- `QUICK_GEN_DEFAULTS` table — per-type generator options.
+- `doQuickGenerate(tabId, projectId)` — reuses existing `Generators.*` + `mutate()`; auto-increment name; `revealedKeys.add(newId)` so user sees the value immediately.
+- `copyProjectAsEnv(project)` — reuses `formatExportContent(keys, 'env')`.
+- `buildHandoffPrompt(project)` / `copyForAIHandoff(project)` — composes the paste-ready prompt.
+- `handleKeyAction(action)` extended with `'envline'` case.
+
+**`/connect.html` — ChatGPT Codex parity:**
+- Hero: "Connect Claude Code **or ChatGPT Codex** to your vault".
+- New **Option 2 · ChatGPT Codex · `AGENTS.md`** card, parallel structure to Option 1 (project/global scope toggle × win/mac OS tabs), with `irm | Add-Content` + `curl >>` installers targeting `./AGENTS.md` (project) and `~/.codex/AGENTS.md` (global).
+- Option 2 (session prompt) renumbered to **Option 3** and reworded as agent-neutral ("Claude Code or ChatGPT Codex").
+- Option 3 (slash command) renumbered to **Option 4** with explicit `CLAUDE CODE ONLY` badge (Codex CLI has no user-defined slash commands yet).
+- New snippet `public/snippets/agents-md.txt` (Codex-flavored sibling of `claude-md.txt`).
+- Both `claude-md.txt` and `agents-md.txt` get a new "Reading existing keys back" section pointing agents at the "Hand off to AI" button — closes the read-direction loop alongside the existing write-direction prefill bridge.
+- Test card + footer security note both updated to mention both agents.
+
+**Browser-verified on localhost:8091:** quick-generate produces correct values for jwt/uuid/password/apiKey and auto-increments names (JWT_SECRET → JWT_SECRET_2); per-key `.env` and Copy-as-.env emit POSIX-safe shell-quoted lines (test value `has$dollar\`backtick'quote` → `'has$dollar\`backtick'\\''quote'`); handoff prompt includes guardrail + project name; dropdown closes on outside click; connect page shows 4 properly-numbered options; agents-md.txt snippet fetches and renders. Zero console errors.
+
 ### Phase 10 — De-pivot to free & open (v3.0) — 2026-06-11
 **Reverses the Phase 7 auth pivot.** Decision: ship the tool free, open, and donation-supported rather than gate it behind invitation-only accounts. The login wall added a breach surface (emails, password hashes, IP audit log) and signup friction while providing none of the benefits a backend justifies (no sync, no sharing, no billing) — and it contradicted the product's own "zero sign-up / no outbound requests" promises. Removing it restores the original thesis and makes those security claims true again.
 - **Removed:** the entire bespoke auth/account system — `functions/` (auth + admin Pages Functions), the D1 database binding, `migrations/`, rate limiters, `login/invite/admin/account.html`, the superadmin script. All preserved in git history (commit `a5eb8ac` onward) if a paid sync tier is ever built.

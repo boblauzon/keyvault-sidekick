@@ -200,11 +200,12 @@
     <main>
       <div style="margin-bottom: 16px;">
         <div class="page-eyebrow">⚡ Quick Connect</div>
-        <h1 class="page-title">Connect Claude Code to your vault</h1>
+        <h1 class="page-title">Connect Claude Code or ChatGPT Codex to your vault</h1>
         <p class="page-lede">
-          One paste into your terminal and Claude knows how to send keys
-          to your vault. Choose <strong>Project</strong> (this repo only)
-          or <strong>Global</strong> (every Claude Code session, everywhere).
+          One paste into your terminal and your coding agent knows how to send
+          keys to your vault. Pick your agent (Claude Code or ChatGPT Codex),
+          then <strong>Project</strong> (this repo only) or
+          <strong>Global</strong> (every session, everywhere).
         </p>
       </div>
 
@@ -221,11 +222,11 @@
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION 1: CLAUDE.md (recommended) -->
+      <!-- OPTION 1: Claude Code · CLAUDE.md -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card recommended" id="option-claude-md">
         <h2 class="option-title">
-          Option 1 · CLAUDE.md memory
+          Option 1 · Claude Code · <code>CLAUDE.md</code>
           <span class="badge badge-accent">RECOMMENDED</span>
         </h2>
         <p class="option-desc">
@@ -299,23 +300,102 @@
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION 2: Session prompt -->
+      <!-- OPTION 2: ChatGPT Codex CLI · AGENTS.md -->
+      <!-- ════════════════════════════════════════════════════════════════════ -->
+      <div class="option-card recommended" id="option-agents-md">
+        <h2 class="option-title">
+          Option 2 · ChatGPT Codex · <code>AGENTS.md</code>
+          <span class="badge badge-accent">RECOMMENDED</span>
+        </h2>
+        <p class="option-desc">
+          ChatGPT Codex CLI reads <code>AGENTS.md</code> on every session.
+          Same install pattern as Option 1, just into Codex's memory file
+          (<code>./AGENTS.md</code> or <code>~/.codex/AGENTS.md</code>).
+        </p>
+
+        <div class="scope-toggle" data-option="agents">
+          <button type="button" data-scope="project" class="active">Project (./AGENTS.md)</button>
+          <button type="button" data-scope="global">Global (~/.codex/AGENTS.md)</button>
+        </div>
+
+        <!-- PROJECT scope -->
+        <div class="scope-panel active" data-scope-panel="agents-project">
+          <div class="install-helper">
+            <strong>Step 1:</strong> Open your terminal <strong>in the project root</strong>.
+            <strong>Step 2:</strong> Paste the one-line install.
+          </div>
+
+          <div class="os-tabs" data-os-tabs="agents-project">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="agents-project-win">
+            <div class="code-mini with-copy" data-cmd="agents-project-win">irm https://keyvault-sidekick.pages.dev/snippets/agents-md.txt | Add-Content -Path .\AGENTS.md -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="agents-project-win">Copy</button>
+            </div>
+          </div>
+          <div class="os-panel" data-os-panel="agents-project-mac">
+            <div class="code-mini with-copy" data-cmd="agents-project-mac">curl -fsSL https://keyvault-sidekick.pages.dev/snippets/agents-md.txt >> ./AGENTS.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="agents-project-mac">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GLOBAL scope -->
+        <div class="scope-panel" data-scope-panel="agents-global">
+          <div class="install-helper">
+            Works from anywhere. Affects every Codex CLI session, in every project.
+          </div>
+
+          <div class="os-tabs" data-os-tabs="agents-global">
+            <button type="button" class="os-tab active" data-os="win">PowerShell · Windows</button>
+            <button type="button" class="os-tab" data-os="mac">Bash · macOS / Linux</button>
+          </div>
+
+          <div class="os-panel active" data-os-panel="agents-global-win">
+            <div class="code-mini with-copy" data-cmd="agents-global-win">New-Item -ItemType Directory -Path "$HOME\.codex" -Force | Out-Null; irm https://keyvault-sidekick.pages.dev/snippets/agents-md.txt | Add-Content -Path "$HOME\.codex\AGENTS.md" -Encoding UTF8
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="agents-global-win">Copy</button>
+            </div>
+          </div>
+          <div class="os-panel" data-os-panel="agents-global-mac">
+            <div class="code-mini with-copy" data-cmd="agents-global-mac">mkdir -p ~/.codex && curl -fsSL https://keyvault-sidekick.pages.dev/snippets/agents-md.txt >> ~/.codex/AGENTS.md
+              <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="agents-global-mac">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <details class="manual-section snippet-preview">
+          <summary>Manual install — copy + paste yourself</summary>
+          <p class="install-helper" style="margin-top: 10px;">
+            View the raw snippet at <a href="/snippets/agents-md.txt" target="_blank">/snippets/agents-md.txt</a>,
+            or copy the content below into <code>./AGENTS.md</code> or <code>~/.codex/AGENTS.md</code>:
+          </p>
+          <div class="code-block" id="code-agents"></div>
+          <button type="button" class="manual-copy-btn copy-btn" data-target="agents">Copy snippet to clipboard</button>
+          <span class="copy-feedback-mini" id="fb-agents">✓ Copied</span>
+        </details>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════ -->
+      <!-- OPTION 3: Session prompt (works for any agent) -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card" id="option-session">
         <h2 class="option-title">
-          Option 2 · Paste in chat
-          <span class="badge">EASIEST · ONE SESSION ONLY</span>
+          Option 3 · Paste in chat
+          <span class="badge">EASIEST · ONE SESSION ONLY · ANY AGENT</span>
         </h2>
         <p class="option-desc">
-          Try-it-out path. No file editing — paste once at the start of
-          a Claude chat. Works for that session only.
+          Try-it-out path. No file editing — paste once at the start of a
+          Claude Code or ChatGPT Codex chat. Works for that session only.
         </p>
         <div class="install-helper">
-          <strong>Step 1:</strong> Click Copy. <strong>Step 2:</strong>
-          In Claude Code, start a new chat (or use <code>/clear</code>) and paste as your first message.
+          <strong>Step 1:</strong> Click Copy. <strong>Step 2:</strong> In
+          Claude Code or ChatGPT Codex, start a new chat (or use
+          <code>/clear</code>) and paste as your first message.
         </div>
         <button type="button" class="primary copy-btn" data-target="session" style="padding: 12px 22px;">Copy session prompt</button>
-        <span class="copy-feedback-mini" id="fb-session">✓ Copied — paste in Claude Code</span>
+        <span class="copy-feedback-mini" id="fb-session">✓ Copied — paste in your agent's chat</span>
 
         <details class="manual-section snippet-preview">
           <summary>Preview what you're copying</summary>
@@ -324,16 +404,19 @@
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- OPTION 3: Slash command -->
+      <!-- OPTION 4: Slash command (Claude Code only) -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
       <div class="option-card" id="option-slash">
         <h2 class="option-title">
-          Option 3 · Slash command
+          Option 4 · Slash command
           <span class="badge badge-purple">POWER USER</span>
+          <span class="badge">CLAUDE CODE ONLY</span>
         </h2>
         <p class="option-desc">
           Adds a <code>/keyvault-save KEY_NAME value [type] [project]</code>
           command to Claude Code. Great muscle memory.
+          <em>(ChatGPT Codex CLI doesn't have user-defined slash commands yet —
+          stick with Options 2 or 3 for Codex.)</em>
         </p>
 
         <div class="scope-toggle" data-option="slash">
@@ -404,14 +487,15 @@
       <div class="test-card">
         <h3>✓ Test it now</h3>
         <p>
-          After installing any option above, start a new Claude Code session
+          After installing any option above, start a new chat in
+          <strong>Claude Code or ChatGPT Codex</strong>
           (or use <code>/clear</code>) and paste this:
         </p>
         <div class="test-prompt" id="test-prompt-text">Generate a 256-bit JWT signing secret and save it to KeyVault as TEST_JWT_SECRET in project "Test"<button type="button" class="primary test-prompt-copy" id="test-prompt-btn">Copy</button></div>
         <p style="margin: 0;">
-          Claude generates the value, runs <code>start "" "URL"</code>, and your
-          browser pops the prefill modal with the key filled in. Click
-          <strong>Save key</strong> and check your vault.
+          The agent generates the value, runs <code>start "" "URL"</code>
+          (or <code>open</code> / <code>xdg-open</code>), and your browser pops the prefill
+          modal with the key filled in. Click <strong>Save key</strong> and check your vault.
         </p>
       </div>
 
@@ -434,10 +518,11 @@
     // Static snippets are now hosted at /snippets/* — but we still expose them
     // here for the "Manual install" preview + copy fallback.
     const SNIPPETS = {
-      md: null, session: null, slash: null
+      md: null, agents: null, session: null, slash: null
     };
     const SNIPPET_URLS = {
       md: '/snippets/claude-md.txt',
+      agents: '/snippets/agents-md.txt',
       session: '/snippets/session-prompt.txt',
       slash: '/snippets/slash-command.md'
     };

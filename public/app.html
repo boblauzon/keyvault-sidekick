@@ -214,6 +214,53 @@
       align-items: center;
     }
     .toolbar input[type="search"] { flex: 1; }
+    .toolbar .toolbar-spacer { flex: 1; }
+
+    /* Quick-generate dropdown (project view). Uses <details>/<summary> so the
+       open/close state is native — no JS state machine needed. */
+    .qg-dropdown { position: relative; }
+    .qg-dropdown > summary {
+      list-style: none; cursor: pointer; user-select: none;
+      padding: 6px 12px; border-radius: 4px;
+      background: var(--accent-dim); color: var(--bg);
+      border: 1px solid var(--accent-dim);
+      font-size: 13px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .qg-dropdown > summary::-webkit-details-marker { display: none; }
+    .qg-dropdown > summary:hover { background: var(--accent); border-color: var(--accent); }
+    .qg-menu {
+      position: absolute; top: calc(100% + 4px); right: 0; z-index: 50;
+      min-width: 240px; padding: 4px;
+      background: var(--bg-elev-2); border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .qg-menu button {
+      background: transparent; border: 1px solid transparent;
+      padding: 8px 12px; font-size: 13px;
+      text-align: left; justify-content: flex-start;
+      border-radius: 4px;
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; font-family: var(--sans);
+      text-transform: none; letter-spacing: 0; font-weight: 500;
+    }
+    .qg-menu button:hover:not(:disabled) {
+      background: var(--bg-elev-3); border-color: var(--border-strong);
+    }
+    .qg-menu .qg-label { color: var(--text); }
+    .qg-menu .qg-hint {
+      margin-left: auto; font-size: 11px; color: var(--text-mute);
+      font-family: var(--mono);
+    }
+    .qg-menu .qg-divider {
+      height: 1px; background: var(--border); margin: 4px 2px;
+    }
+    .qg-menu .qg-section {
+      padding: 6px 12px 2px; font-size: 10px; font-family: var(--mono);
+      color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.06em;
+    }
 
     .project-color {
       display: inline-block;
@@ -1518,6 +1565,22 @@
               <div class="toolbar">
                 <input type="search" id="search" placeholder="Search keys..." value="${escapeHtml(searchQuery)}" autocomplete="off">
                 <button type="button" class="primary" id="btn-add-key">+ Add key</button>
+                <details class="qg-dropdown" id="qg-dropdown">
+                  <summary>+ Quick generate ▾</summary>
+                  <div class="qg-menu" role="menu">
+                    <div class="qg-section">Common</div>
+                    <button type="button" data-quick-gen="jwt"><span class="qg-label">🔑 JWT secret</span><span class="qg-hint">256-bit</span></button>
+                    <button type="button" data-quick-gen="uuid"><span class="qg-label">🆔 UUID v4</span><span class="qg-hint">random</span></button>
+                    <button type="button" data-quick-gen="password"><span class="qg-label">🔒 Password</span><span class="qg-hint">24 chars</span></button>
+                    <button type="button" data-quick-gen="apiKey"><span class="qg-label">🗝️ API key</span><span class="qg-hint">sk- + 40</span></button>
+                    <div class="qg-divider"></div>
+                    <div class="qg-section">More</div>
+                    <button type="button" data-quick-gen="hex"><span class="qg-label">Random hex</span><span class="qg-hint">32 bytes</span></button>
+                    <button type="button" data-quick-gen="base64"><span class="qg-label">Random base64</span><span class="qg-hint">32 bytes</span></button>
+                  </div>
+                </details>
+                <button type="button" id="btn-copy-env" title="Copy every key as KEY=value lines (.env format)">Copy as .env</button>
+                <button type="button" id="btn-handoff-ai" title="Copy a paste-ready prompt for Claude Code / ChatGPT Codex">Hand off to AI ↗</button>
                 <button type="button" id="btn-import-env">Import .env</button>
               </div>
             ` : ''}
@@ -1533,6 +1596,34 @@
         if (addBtn) addBtn.addEventListener('click', () => openKeyModal(project.id, null));
         const importBtn = document.getElementById('btn-import-env');
         if (importBtn) importBtn.addEventListener('click', () => openImportEnvModal(project.id));
+
+        // v3.1: Quick-generate menu items — one click per type, saves to THIS project.
+        mainEl.querySelectorAll('[data-quick-gen]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dd = document.getElementById('qg-dropdown');
+            if (dd) dd.open = false;
+            doQuickGenerate(btn.dataset.quickGen, project.id);
+          });
+        });
+        // Close the dropdown when clicking outside its summary/menu.
+        const qg = document.getElementById('qg-dropdown');
+        if (qg && !window.__qgOutsideClickBound) {
+          document.addEventListener('click', (e) => {
+            const open = document.querySelector('details.qg-dropdown[open]');
+            if (open && !open.contains(e.target)) open.open = false;
+          });
+          window.__qgOutsideClickBound = true;
+        }
+
+        // v3.1: One-click "Copy as .env" for the whole project.
+        const copyEnvBtn = document.getElementById('btn-copy-env');
+        if (copyEnvBtn) copyEnvBtn.addEventListener('click', () => copyProjectAsEnv(project));
+
+        // v3.1: One-click "Hand off to AI" — copies a paste-ready prompt for
+        // Claude Code or ChatGPT Codex (works for Codex Cloud too where the
+        // prefill URL bridge isn't reachable).
+        const handoffBtn = document.getElementById('btn-handoff-ai');
+        if (handoffBtn) handoffBtn.addEventListener('click', () => copyForAIHandoff(project));
 
         const emptyAdd = document.getElementById('btn-empty-add-key');
         if (emptyAdd) emptyAdd.addEventListener('click', () => openKeyModal(project.id, null));
@@ -1591,7 +1682,8 @@
                     <div class="value${revealed ? ' revealed' : ''}" aria-label="${revealed ? 'Revealed key value' : 'Hidden key value'}">${displayValue}</div>
                     <div class="row-actions">
                       <button type="button" class="icon-btn" data-action="${revealed ? 'hide' : 'reveal'}">${revealed ? 'Hide' : 'Show'}</button>
-                      <button type="button" class="icon-btn" data-action="copy">Copy</button>
+                      <button type="button" class="icon-btn" data-action="copy" title="Copy raw value">Copy</button>
+                      <button type="button" class="icon-btn" data-action="envline" title="Copy as KEY=&quot;value&quot; (.env line)">.env</button>
                       <button type="button" class="icon-btn" data-action="edit">Edit</button>
                       <button type="button" class="icon-btn danger" data-action="delete">Delete</button>
                     </div>
@@ -2298,6 +2390,15 @@
           } catch (err) {
             showToast('Could not copy. Reveal and copy manually.', 'err');
           }
+        } else if (action === 'envline') {
+          const k = findKey(projectId, keyId);
+          if (!k) return;
+          try {
+            await copyToClipboard(`${k.name}=${shellQuote(k.value)}`);
+            showToast(`Copied: ${k.name}=…`);
+          } catch (err) {
+            showToast('Could not copy. Reveal and copy manually.', 'err');
+          }
         } else if (action === 'edit') {
           const k = findKey(projectId, keyId);
           if (!k) return;
@@ -2551,6 +2652,105 @@
           return JSON.stringify({ env }, null, 2);
         }
         return keys.map(k => `${k.name}=${shellQuote(k.value)}`).join('\n'); // .env
+      }
+
+      // ── v3.1: One-click handoff helpers (project view) ────────────────────────
+
+      // Quick generate: pick a type from the dropdown menu and a new key is
+      // generated + saved to the current project with an auto-incrementing
+      // default name. Reuses the same Generators module the Generator screen
+      // uses, with sensible defaults per type.
+      const QUICK_GEN_DEFAULTS = {
+        jwt:      { bits: 256 },
+        uuid:     {},
+        hex:      { bytes: 32 },
+        base64:   { bytes: 32 },
+        apiKey:   { prefix: 'sk-', length: 40 },
+        password: { length: 24, lowercase: true, uppercase: true, digits: true, symbols: true }
+      };
+      async function doQuickGenerate(tabId, projectId) {
+        const tab = GEN_TABS.find(t => t.id === tabId);
+        if (!tab) return;
+        const opt = QUICK_GEN_DEFAULTS[tabId] || {};
+        let value;
+        try {
+          if (tabId === 'jwt')           value = Generators.jwt(opt.bits);
+          else if (tabId === 'uuid')     value = Generators.uuid();
+          else if (tabId === 'hex')      value = Generators.hex(opt.bytes);
+          else if (tabId === 'base64')   value = Generators.base64(opt.bytes);
+          else if (tabId === 'apiKey')   value = Generators.apiKey(opt.prefix, opt.length);
+          else if (tabId === 'password') value = Generators.password(opt.length, opt);
+          else return;
+        } catch (err) {
+          showToast(err.message || 'Generate failed', 'err');
+          return;
+        }
+        const project = findProject(projectId);
+        if (!project) return;
+        // Auto-increment the default name if it's taken (KEY, KEY_2, KEY_3, ...).
+        const existing = new Set(project.keys.map(k => k.name));
+        let name = tab.defaultName;
+        let n = 2;
+        while (existing.has(name)) name = `${tab.defaultName}_${n++}`;
+        const newId = createId();
+        try {
+          await mutate(vault => {
+            const p = vault.projects.find(p => p.id === projectId);
+            if (!p) throw new Error('Project no longer exists.');
+            const ts = now();
+            p.keys.unshift({
+              id: newId, name, value, type: tab.defaultType,
+              notes: `Quick generated ${new Date().toISOString().slice(0, 10)}`,
+              createdAt: ts, updatedAt: ts
+            });
+            p.updatedAt = ts;
+          });
+          revealedKeys.add(newId);  // Reveal by default so the user can verify or copy.
+          render();
+          showToast(`${name} generated. Click Edit to rename.`);
+        } catch (err) {
+          showToast(err.message || 'Save failed', 'err');
+        }
+      }
+
+      // Copy as .env: every key in the project as KEY="value" lines, on the
+      // clipboard, one click. Bypasses the Export screen entirely.
+      async function copyProjectAsEnv(project) {
+        if (!project.keys.length) {
+          showToast('No keys to copy', 'err');
+          return;
+        }
+        try {
+          await copyToClipboard(formatExportContent(project.keys, 'env'));
+          showToast(`${project.keys.length} key${project.keys.length === 1 ? '' : 's'} copied as .env`);
+        } catch {
+          showToast('Could not copy', 'err');
+        }
+      }
+
+      // Hand off to AI: copy a paste-ready prompt that works for Claude Code,
+      // ChatGPT Codex CLI, AND ChatGPT Codex Cloud (where the prefill URL
+      // bridge can't reach the user's browser). Explicit non-echo guard.
+      function buildHandoffPrompt(project) {
+        const envLines = project.keys.map(k => `${k.name}=${shellQuote(k.value)}`).join('\n');
+        return `Project: ${project.name}\n` +
+               `\n` +
+               `Here are the API keys for this session. Treat them as environment variables in any code you generate or run. ` +
+               `Do not echo, log, or repeat the values back to me. Do not include them in commits.\n` +
+               `\n` +
+               envLines + `\n`;
+      }
+      async function copyForAIHandoff(project) {
+        if (!project.keys.length) {
+          showToast('No keys to hand off', 'err');
+          return;
+        }
+        try {
+          await copyToClipboard(buildHandoffPrompt(project));
+          showToast(`Handoff ready (${project.keys.length} key${project.keys.length === 1 ? '' : 's'}) — paste into Claude Code or ChatGPT Codex`);
+        } catch {
+          showToast('Could not copy', 'err');
+        }
       }
 
       // ── Export screen ─────────────────────────────────────────────────────────

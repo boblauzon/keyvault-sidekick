@@ -17,5 +17,10 @@ When I ask you to save a secret to my vault, please:
 4. Tell me: "Opening KeyVault — review and click Save key."
 
 KeyVault needs no sign-in — the URL opens my vault directly and the prefill
-modal appears once it's unlocked. Acknowledge that you understand and I'll
-start giving you keys to save.
+modal appears once it's unlocked.
+
+If you ever need to USE keys I've already saved, tell me to click
+"Hand off to AI ↗" in the vault's project view — that copies a paste-ready
+prompt with the KEY=value lines + non-echo guardrails for me to paste back.
+
+Acknowledge that you understand and I'll start giving you keys to save.
