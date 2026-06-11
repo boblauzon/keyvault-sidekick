@@ -25,9 +25,9 @@ When the user asks to "save a key to KeyVault", "send to my vault",
    in the prefill modal."
 
 Notes:
-- The user must already be signed in at https://keyvault-sidekick.pages.dev.
-- If they aren't, the URL routes through login first, then opens the
-  prefill modal automatically.
+- KeyVault Sidekick is free and needs no sign-in — opening the URL goes
+  straight to the vault, which pops the prefill modal once it's unlocked.
+- The user must have their vault unlocked (master password) to save the key.
 - The secret value appears in the Claude chat, the shell command, and
   the browser URL bar (~100ms). For maximum-secrecy keys, the user
   should paste directly into the vault Add Key form instead.

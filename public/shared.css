@@ -191,6 +191,21 @@ button.ghost:hover:not(:disabled) {
 }
 .btn.large, button.large { padding: 14px 24px; font-size: 15px; }
 
+/* Ko-fi "buy me a coffee" support button. Native — loads NOTHING external
+   (just a link to ko-fi.com), so it is CSP-safe even on the zero-network vault.
+   Warm amber so it reads as a friendly coffee tip and sits apart from the
+   teal "Open Vault" primary CTA without competing with it. */
+.btn-kofi {
+  background: rgba(251,191,36,0.08);
+  border-color: rgba(251,191,36,0.35);
+  color: var(--warn);
+}
+.btn-kofi:hover {
+  background: rgba(251,191,36,0.16);
+  border-color: rgba(251,191,36,0.6);
+  color: #fcd34d;
+}
+
 /* ── Forms ─────────────────────────────────────────────────────────────────── */
 label {
   display: block; font-family: var(--sans); font-size: 12px;

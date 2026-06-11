@@ -212,6 +212,14 @@ Salt and IV are unique per save operation. The master password is never stored o
 
 ## 10. Build Plan
 
+### Phase 10 — De-pivot to free & open (v3.0) — 2026-06-11
+**Reverses the Phase 7 auth pivot.** Decision: ship the tool free, open, and donation-supported rather than gate it behind invitation-only accounts. The login wall added a breach surface (emails, password hashes, IP audit log) and signup friction while providing none of the benefits a backend justifies (no sync, no sharing, no billing) — and it contradicted the product's own "zero sign-up / no outbound requests" promises. Removing it restores the original thesis and makes those security claims true again.
+- **Removed:** the entire bespoke auth/account system — `functions/` (auth + admin Pages Functions), the D1 database binding, `migrations/`, rate limiters, `login/invite/admin/account.html`, the superadmin script. All preserved in git history (commit `a5eb8ac` onward) if a paid sync tier is ever built.
+- **app.html:** removed the `/api/auth/me` gate + logout; restored CSP `connect-src 'none'` (the vault again makes ZERO network requests); replaced the user-pill/signout with ⚡ Connect + ♥ Support links.
+- **index.html / connect.html:** flipped messaging from "invitation-only · Sign in" to "free & open · Open vault"; removed the auth redirects.
+- **Monetization:** native Ko-fi support button → ko-fi.com/roblauzon (`☕ Support` topbar links + landing "☕ Buy me a coffee"). Implemented as plain styled links (new `.btn-kofi` amber style in shared.css), **NOT** the Ko-fi CDN widget/script/image — those load external resources from storage.ko-fi.com and would violate the vault's `connect-src 'none'` / "no outbound requests — ever" guarantee. No accounts, no paywall.
+- **Distribution plan:** make the GitHub repo public, add a real domain, launch to the Claude Code / Cloudflare / self-hosted communities, list in the VibeProSoft Hub catalog.
+
 ### Phase 1 — Foundation (Week 1) — SHIPPED 2026-06-07
 - [x] Crypto module: encrypt / decrypt / derive key / PBKDF2
 - [x] Storage module: save / load / wipe encrypted blob

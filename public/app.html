@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- CSP: connect-src 'self' allows only same-origin auth API calls (/api/auth/me, /logout).
-       The vault content NEVER goes through any fetch — it stays in localStorage.
-       The auth API has zero access to vault content; it only manages session cookies. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
+  <!-- CSP: connect-src 'none' — the vault makes ZERO network requests. All crypto
+       and storage are local; secrets live only in this browser's localStorage and
+       never traverse the network. No analytics, no auth, no fetch of any kind. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
   <meta name="referrer" content="no-referrer">
   <title>KeyVault Sidekick</title>
   <style>
@@ -693,7 +693,7 @@
       </span>
       <span class="appfoot-item">
         <button type="button" class="appfoot-link" id="appfoot-verify">Verify ↗</button>
-        <span class="appfoot-version">v1.5 · Phase 6</span>
+        <span class="appfoot-version">v3.0 · Free &amp; open</span>
       </span>
     </footer>
   </div>
@@ -703,9 +703,14 @@
   <script>
     'use strict';
 
-    // ── Auth gate ─────────────────────────────────────────────────────────────
-    // Capture URL fragment BEFORE any auth redirect — fragments don't survive
-    // server-side redirects, so we have to stash it client-side first.
+    // ── Support link (Ko-fi) ──────────────────────────────────────────────────
+    // KeyVault Sidekick is free & open. If it saves you time, you can chip in.
+    const KOFI_URL = 'https://ko-fi.com/roblauzon';
+
+    // ── Prefill capture ───────────────────────────────────────────────────────
+    // Capture the URL fragment early (the Claude Code prefill bridge). The
+    // #fragment never reaches the server, so the secret value carried in it stays
+    // client-side. We stash it in sessionStorage, then strip it from the URL bar.
     (function captureFragmentEarly() {
       try {
         const h = window.location.hash;
@@ -717,26 +722,6 @@
         sessionStorage.setItem('kvs_prefill', prefill.toString());
         history.replaceState(null, '', window.location.pathname);
       } catch { /* ignore */ }
-    })();
-
-    // Verify session. If unauthenticated, redirect to /login.html.
-    // The vault UI does NOT render until this check succeeds.
-    let __currentUser = null;
-    const __authReady = (async () => {
-      try {
-        const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
-        if (!r.ok) {
-          window.location.href = '/login.html';
-          // Keep page blank while redirecting.
-          await new Promise(() => {}); // never resolve
-        }
-        const data = await r.json();
-        __currentUser = data.user;
-      } catch (err) {
-        // Network failure — show a friendly error rather than blank screen.
-        document.body.innerHTML = '<div style="padding:40px; font-family:system-ui; color:#e6ebf2; background:#0a0d10; min-height:100vh"><h1>Cannot verify session</h1><p>Check your network and reload.</p></div>';
-        await new Promise(() => {});
-      }
     })();
 
     // ── Integrity capture ─────────────────────────────────────────────────────
@@ -1216,40 +1201,28 @@
       }
 
       function setStatusChip(state) {
-        // User pill (right of everything) — shown whenever auth is known
-        const userPill = __currentUser ? `
+        // Always-visible utility links: ⚡ Connect (Claude Code bridge) + ♥ Support (Ko-fi).
+        const utilLinks = `
           <a href="/connect.html" class="btn-help" title="Quick Connect to Claude Code" aria-label="Quick Connect" style="font-size: 13px; padding: 4px 8px;">⚡</a>
-          <a href="/account.html" class="user-pill" title="Account settings — ${escapeHtml(__currentUser.email)}">
-            ${escapeHtml(__currentUser.email)}
-            ${__currentUser.role === 'superadmin' ? '<span class="user-pill-admin">ADMIN</span>' : ''}
-          </a>
-          <button type="button" id="btn-signout" class="btn-help" title="Sign out" aria-label="Sign out">⏻</button>
-        ` : '';
+          <a href="${KOFI_URL}" target="_blank" rel="noopener noreferrer" class="btn-help" title="Support KeyVault on Ko-fi" aria-label="Support KeyVault on Ko-fi" style="font-size: 13px; padding: 4px 8px;">☕</a>
+        `;
 
         if (state === 'locked') {
-          topbarActionsEl.innerHTML = '<span class="status-chip locked">Locked</span>' + userPill;
+          topbarActionsEl.innerHTML = '<span class="status-chip locked">Locked</span>' + utilLinks;
         } else if (state === 'unlocked') {
           topbarActionsEl.innerHTML = `
             <span class="status-chip unlocked">Unlocked</span>
             <button type="button" id="btn-help" class="btn-help" title="Claude Code integration & security guide" aria-label="Help">?</button>
             <button type="button" id="btn-settings" class="btn-settings-gear" title="Settings" aria-label="Settings">⚙</button>
             <button type="button" id="btn-lock">Lock</button>
-            ${userPill}
+            ${utilLinks}
           `;
           document.getElementById('btn-lock').addEventListener('click', lock);
           document.getElementById('btn-settings').addEventListener('click', () => navigate('settings'));
           document.getElementById('btn-help').addEventListener('click', () => navigate('guide'));
         } else {
-          topbarActionsEl.innerHTML = userPill;
+          topbarActionsEl.innerHTML = utilLinks;
         }
-
-        const signOutBtn = document.getElementById('btn-signout');
-        if (signOutBtn) signOutBtn.addEventListener('click', async () => {
-          stopIdleTimer();
-          VaultState.lock();
-          await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(()=>{});
-          window.location.href = '/';
-        });
       }
 
       function setTopNav(activeView) {
@@ -3504,9 +3477,8 @@ py -3 -m http.server 8091
       return { init, _internal: { mutate, findProject, findKey } };
     })();
 
-    // Wait for both DOM and auth gate before initializing the vault UI.
-    async function bootApp() {
-      await __authReady;
+    // Initialize the vault UI once the DOM is ready. No auth, no network.
+    function bootApp() {
       App.init();
     }
     if (document.readyState === 'loading') {

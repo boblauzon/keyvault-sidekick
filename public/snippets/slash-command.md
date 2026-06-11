@@ -24,5 +24,5 @@ Steps:
      xdg-open "<URL>"     # Linux
 6. Confirm to the user: "Opening KeyVault — review and click Save key."
 
-The user must already be signed in at https://keyvault-sidekick.pages.dev.
-Session lasts 30 days.
+No sign-in needed — the URL opens the vault directly. The user just needs
+their vault unlocked (master password) for the prefill modal to appear.

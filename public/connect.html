@@ -191,10 +191,9 @@
         </span>
       </a>
       <div class="topbar-actions">
-        <a href="/app.html" class="btn">Open vault</a>
-        <a href="/account.html" class="btn ghost">Account</a>
-        <a href="/admin.html" class="btn" id="admin-link" style="display:none">Admin</a>
-        <button type="button" id="logout-btn">Sign out</button>
+        <a href="/" class="btn ghost">Home</a>
+        <a href="https://ko-fi.com/roblauzon" target="_blank" rel="noopener noreferrer" class="btn btn-kofi" title="Support KeyVault on Ko-fi">☕ Support</a>
+        <a href="/app.html" class="btn primary">Open vault</a>
       </div>
     </header>
 
@@ -420,7 +419,7 @@
         <strong>About the one-line installer's safety:</strong>
         <ul>
           <li><code>irm URL | Add-Content</code> and <code>curl URL >> file</code> only <strong>write</strong> the response to a file — they never <strong>execute</strong> it. This is data, not a remote script.</li>
-          <li>The URLs point to <code>keyvault-sidekick.pages.dev/snippets/...</code>, the same origin you signed into. If you trust this site enough to store your secrets here, fetching plain-text instructions from it is the same trust level.</li>
+          <li>The URLs point to <code>keyvault-sidekick.pages.dev/snippets/...</code>, the same origin that serves your vault. If you trust this site enough to store your secrets here, fetching plain-text instructions from it is the same trust level.</li>
           <li>You can preview the exact text before running: <code>irm https://keyvault-sidekick.pages.dev/snippets/claude-md.txt</code></li>
           <li>The snippets contain no secrets, no keys, and no executable code — only instructions for Claude.</li>
           <li>Running the install twice will duplicate the entry. <code>Add-Content</code> appends; <code>Set-Content</code> overwrites. Adjust if you re-run.</li>
@@ -431,12 +430,6 @@
 
   <script>
     const $ = id => document.getElementById(id);
-
-    fetch('/api/auth/me', { credentials: 'same-origin' }).then(async r => {
-      if (!r.ok) { window.location.href = '/login.html'; return; }
-      const { user } = await r.json();
-      if (user.role === 'superadmin') $('admin-link').style.display = '';
-    });
 
     // Static snippets are now hosted at /snippets/* — but we still expose them
     // here for the "Manual install" preview + copy fallback.
@@ -553,10 +546,6 @@
       }
     });
 
-    $('logout-btn').addEventListener('click', async () => {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-      window.location.href = '/';
-    });
   </script>
 </body>
 </html>

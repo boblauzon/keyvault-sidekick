@@ -16,6 +16,6 @@ When I ask you to save a secret to my vault, please:
 
 4. Tell me: "Opening KeyVault — review and click Save key."
 
-I'm already signed in at https://keyvault-sidekick.pages.dev in my browser,
-so the prefill modal should open immediately. Acknowledge that you understand
-and I'll start giving you keys to save.
+KeyVault needs no sign-in — the URL opens my vault directly and the prefill
+modal appears once it's unlocked. Acknowledge that you understand and I'll
+start giving you keys to save.

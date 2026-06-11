@@ -1,16 +1,12 @@
 {
   "name": "keyvault-sidekick",
-  "version": "2.0.0",
-  "description": "Browser-only AES-256-GCM encrypted secrets vault for vibe coders. Multi-tenant build.",
+  "version": "3.0.0",
+  "description": "Browser-only AES-256-GCM encrypted secrets vault for vibe coders. Free, open, local-first — zero backend, no accounts.",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --d1=DB=keyvault-sidekick-db --port 8091",
-    "deploy": "wrangler pages deploy public --project-name keyvault-sidekick --branch main",
-    "db:apply:local": "wrangler d1 migrations apply keyvault-sidekick-db --local",
-    "db:apply:remote": "wrangler d1 migrations apply keyvault-sidekick-db --remote",
-    "db:execute:remote": "wrangler d1 execute keyvault-sidekick-db --remote --command",
-    "create-superadmin": "node scripts/create-superadmin.mjs"
+    "dev": "wrangler pages dev public --port 8091",
+    "deploy": "wrangler pages deploy public --project-name keyvault-sidekick --branch main"
   },
   "devDependencies": {
     "wrangler": "^4.96.0"

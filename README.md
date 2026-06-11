@@ -27,8 +27,9 @@ Built for Claude Code users on the Cloudflare stack — organizing project secre
 ## Run locally
 
 ```bash
-py -3 -m http.server 8091 --directory "KeyVault Sidekick"
-# open http://localhost:8091
+py -3 -m http.server 8091 --directory "KeyVault Sidekick/public"
+# open http://localhost:8091           (landing page)
+# open http://localhost:8091/app.html  (the vault)
 ```
 
 Or via Claude Code launch config:
@@ -46,7 +47,7 @@ After Claude creates a key via MCP (Stripe, Cloudflare, etc.), it can open a URL
 
 **URL format:**
 ```
-http://localhost:8091/#action=prefill&name=KEY_NAME&value=KEY_VALUE&type=api_key&project=ProjectName&notes=optional+notes
+http://localhost:8091/app.html#action=prefill&name=KEY_NAME&value=KEY_VALUE&type=api_key&project=ProjectName&notes=optional+notes
 ```
 
 **Parameters:**
@@ -73,14 +74,14 @@ http://localhost:8091/#action=prefill&name=KEY_NAME&value=KEY_VALUE&type=api_key
 Ask Claude: "Create a Stripe restricted API key for ITIL Sidekick and save it to my vault"
 
 Claude creates the key via Stripe MCP, then navigates to:
-http://localhost:8091/#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_xxx&type=api_key&project=ITIL+Sidekick&notes=Restricted+to+Charges+only
+http://localhost:8091/app.html#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_xxx&type=api_key&project=ITIL+Sidekick&notes=Restricted+to+Charges+only
 ```
 
 ---
 
 ## Security model
 
-- **Zero backend.** The server only serves `index.html`. No API, no database, no accounts.
+- **Zero backend.** The server only serves static files (landing, vault, Claude Code onboarding). No API, no database, no accounts, no sessions.
 - **Encrypted at rest.** The `localStorage` blob is ciphertext — key names and values are never stored in plaintext.
 - **URL fragment security.** The `#fragment` part of a URL is never sent to the HTTP server, so `value=...` in the prefill URL is not logged server-side.
 - **Short-lived in memory.** The derived AES key lives in JS memory only. Cleared on lock. Cleared on page close.
@@ -139,10 +140,10 @@ Or save the page offline (Guide → Integrity → **Save offline copy**) and dou
 
 ## Stack
 
-- Vanilla HTML / CSS / JS — single `index.html` file (~2300 lines)
+- Vanilla HTML / CSS / JS — the vault is a single `public/app.html` (~3500 lines), plus a static landing (`index.html`) and Claude Code onboarding (`connect.html`)
 - Web Crypto API (PBKDF2 + AES-256-GCM, native browser)
 - `localStorage` (encrypted blob)
-- Zero build tooling for MVP — open and use
+- Zero build tooling, zero dependencies, zero backend — open and use
 - Hosted on Cloudflare Pages (static, free tier)
 
 ---
@@ -161,6 +162,14 @@ Or save the page offline (Guide → Integrity → **Save offline copy**) and dou
 | 6.1 — Vibe-code audit remediation (v1.5.2) | ✅ Shipped |
 
 ---
+
+## Support
+
+KeyVault Sidekick is **free and open**. If it saves you time, you can support its development:
+
+**☕ [Buy me a coffee on Ko-fi](https://ko-fi.com/roblauzon)**
+
+No accounts, no paywalls, no upsells. Donations are entirely optional and keep the tool free for everyone.
 
 ## Part of VibeProSoft
 
