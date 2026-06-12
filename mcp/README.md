@@ -41,6 +41,45 @@ decrypts here. Same AES-256-GCM, same PBKDF2-SHA256 (310 000 iterations).
 
 ---
 
+## Two interfaces: MCP server + `keyvault` CLI
+
+This package installs **two** local binaries that share one encrypted vault:
+
+| | `keyvault-sidekick-mcp` (MCP server) | `keyvault` (CLI) |
+|---|---|---|
+| For | Conversational / agentic use | **Secure deploys** |
+| How | The agent calls tools; values come back **into the chat** | You pipe values **straight to their destination** |
+| Use when | "list my projects", "generate + save a key", browsing | "put this secret on the worker **without showing it to the model**" |
+
+**Why the CLI matters:** when the MCP returns a key value, that plaintext lands in
+the agent's conversation/transcript. The CLI writes secret values to **stdout
+only**, so they pipe to their destination without ever passing through the chat:
+
+```bash
+# Deploy an existing key to a Cloudflare Worker — value never shown:
+keyvault get Velocity STRIPE_SECRET | wrangler secret put STRIPE_SECRET
+
+# Write a whole project's keys to a dotfile:
+keyvault export-env Velocity > .dev.vars
+
+# Generate, save, AND deploy a new secret in one line:
+keyvault generate jwt --save --project Velocity --name AUTH_SECRET | wrangler secret put AUTH_SECRET
+
+# Save a value produced by another tool (read from STDIN, not argv):
+openssl rand -hex 16 | keyvault save Velocity WEBHOOK_KEY
+```
+
+Secret **values → stdout**; status/errors → stderr, so a piped value is always
+exact (no trailing newline). Run `keyvault help` for the full command list.
+
+**Getting `keyvault` on your PATH:** from the repo, `cd mcp && npm link` (or
+`npm install -g .`). Without that, invoke it as
+`node /path/to/keyvault-sidekick/mcp/cli.mjs <command>`. Either way, set
+`KEYVAULT_PASSWORD` in the shell (e.g. `export KEYVAULT_PASSWORD=…`, or pull it
+from your OS keychain) before running it.
+
+---
+
 ## Requirements
 
 - **Node.js 18 or newer** (uses the built-in WebCrypto API). Node 20+ recommended.

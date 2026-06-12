@@ -529,6 +529,19 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
           <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/README.md" target="_blank" rel="noopener">MCP setup guide ↗</a>.
         </p>
 
+        <div class="how-it-works" style="margin: 16px 0 0 0;">
+          <h3>Deploy secrets without exposing them</h3>
+          <p>
+            The same package ships a <code>keyvault</code> CLI that writes values to
+            <strong>stdout only</strong> — so they pipe straight to their destination
+            and <strong>never enter the AI's chat/transcript</strong>:
+          </p>
+          <p style="margin-top: 8px;">
+            <code>keyvault get Velocity STRIPE_SECRET | wrangler secret put STRIPE_SECRET</code><br>
+            <code>keyvault export-env Velocity &gt; .dev.vars</code>
+          </p>
+        </div>
+
         <div class="security-note" style="margin-top: 16px;">
           <strong>Heads up — ChatGPT web &amp; Codex Cloud:</strong> those run in a
           remote sandbox and <strong>can't reach a local server</strong>. Only a
