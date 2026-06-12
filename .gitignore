@@ -23,3 +23,7 @@ node_modules/
 
 # Bootstrap output
 .superadmin-bootstrap.json
+
+# MCP local vault + test artifacts (never commit a real or test vault file)
+mcp/.test-vault*.json
+vault.json

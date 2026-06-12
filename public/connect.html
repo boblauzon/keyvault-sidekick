@@ -486,6 +486,59 @@
         </details>
       </div>
 
+      <!-- ════════════════════════════════════════════════════════════════════ -->
+      <!-- OPTION 5: Local MCP server (full autonomy) -->
+      <!-- ════════════════════════════════════════════════════════════════════ -->
+      <div class="option-card recommended" id="option-mcp">
+        <h2 class="option-title">
+          Option 5 · MCP server
+          <span class="badge badge-accent">FULL AUTONOMY</span>
+          <span class="badge badge-purple">LOCAL AGENTS</span>
+        </h2>
+        <p class="option-desc">
+          The hands-free path. Install a <strong>local MCP server</strong> and your
+          agent reads, writes, generates, and exports keys <strong>directly</strong> —
+          no prefill URL, no clicking Save. <em>"Create a Stripe key and save it to
+          KeyVault project ITIL"</em> just happens. Works with
+          <strong>Claude Code, Claude Desktop, Cursor, and Codex CLI</strong>.
+          Secrets stay on your machine — the server runs locally over a local
+          encrypted vault file (same AES-256-GCM format as this app).
+        </p>
+
+        <div class="how-it-works" style="margin: 0 0 18px 0;">
+          <h3>Requirements</h3>
+          <p>
+            <strong>Node.js 18+</strong> and your KeyVault master password. The
+            server is one zero-dependency file — clone the repo and point your
+            agent at <code>mcp/index.mjs</code>.
+          </p>
+        </div>
+
+        <div class="install-helper">
+          <strong>Claude Code</strong> — clone the repo, then add the server (sets your
+          master password as an env var the agent never sees):
+        </div>
+        <div class="code-mini with-copy" data-cmd="mcp-claude">git clone https://github.com/boblauzon/keyvault-sidekick
+claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs
+          <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="mcp-claude">Copy</button>
+        </div>
+
+        <p class="install-helper" style="margin-top: 4px;">
+          <strong>Claude Desktop, Cursor, Codex CLI</strong> and the full tool list,
+          security model, and browser&nbsp;↔&nbsp;MCP bridge are in the
+          <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/README.md" target="_blank" rel="noopener">MCP setup guide ↗</a>.
+        </p>
+
+        <div class="security-note" style="margin-top: 16px;">
+          <strong>Heads up — ChatGPT web &amp; Codex Cloud:</strong> those run in a
+          remote sandbox and <strong>can't reach a local server</strong>. Only a
+          remote backend could serve them, and that would mean a server holding your
+          plaintext secrets — which KeyVault deliberately never does. For ChatGPT web
+          / Codex Cloud, use Options 1–3 (the prefill bridge) plus the
+          <strong>Hand off to AI ↗</strong> button in the vault.
+        </div>
+      </div>
+
       <!-- TEST IT NOW -->
       <div class="test-card">
         <h3>✓ Test it now</h3>

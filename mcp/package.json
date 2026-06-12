@@ -1,0 +1,36 @@
+{
+  "name": "keyvault-sidekick-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server for KeyVault Sidekick — lets Claude Code / Claude Desktop / Cursor / Codex CLI generate, store, retrieve, and export API keys in a local AES-256-GCM encrypted vault. Zero dependencies, secrets never leave your machine.",
+  "type": "module",
+  "bin": {
+    "keyvault-sidekick-mcp": "index.mjs"
+  },
+  "main": "index.mjs",
+  "files": [
+    "index.mjs",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "keyvault",
+    "secrets",
+    "api-keys",
+    "claude",
+    "cursor",
+    "vault",
+    "local-first"
+  ],
+  "license": "MIT",
+  "author": "Rob Lauzon / VibeProSoft",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boblauzon/keyvault-sidekick.git",
+    "directory": "mcp"
+  },
+  "private": false
+}

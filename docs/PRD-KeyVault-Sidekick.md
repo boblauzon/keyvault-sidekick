@@ -212,6 +212,17 @@ Salt and IV are unique per save operation. The master password is never stored o
 
 ## 10. Build Plan
 
+### Phase 13 — Local MCP server (v3.3) — 2026-06-11
+Gives AI agents full autonomy over the vault — *"Claude, get the API keys and manage them in KeyVault"* — **without** betraying the zero-knowledge model. Modeled on ITIL Sidekick's `functions/mcp.js` (JSON-RPC MCP), but **local stdio instead of remote HTTP**: ITIL can ship a remote MCP because it has a backend that holds the data; KeyVault deliberately has none, so a remote MCP would have to store + return plaintext secrets (the exact thing the v3.0 de-pivot removed). A **local** server keeps "secrets never leave your device" literally true — it runs on the user's machine over a local encrypted vault file.
+- **`mcp/index.mjs`** — zero-dependency Node 18+ MCP server. Newline-delimited JSON-RPC 2.0 over stdio. Handles initialize / initialized / ping / tools/list / tools/call / resources/list / prompts/list. Requests serialized through a single promise chain so mutating ops never race or interleave `persist()` writes.
+- **WebCrypto byte-identical to the browser** (`webcrypto.subtle`): PBKDF2-SHA256 310k → AES-256-GCM, standard base64, NFC password, same `{version,kdf,cipher}` blob. **Verified both directions in-browser:** browser decrypts an MCP-written `vault.json`; Node decrypts a browser-exported `.vault`. So the two share one store via Settings → Import/Export `.vault`.
+- **8 tools:** `keyvault_list_projects`, `keyvault_list_keys` (names only, no values), `keyvault_get_key` (the value), `keyvault_save_key` (upsert, auto-creates project), `keyvault_generate` (jwt/uuid/hex/base64/apiKey/password, optional save), `keyvault_export_env` (.env/.envrc/settings, shell-quoted), `keyvault_create_project`, `keyvault_delete_key`. Generators ported from the browser (modulo-bias-free rejection sampling).
+- **Config:** `KEYVAULT_PASSWORD` (required; derive-only, never written), `KEYVAULT_VAULT_PATH` (default `~/.keyvault-sidekick/vault.json`, written `0600`).
+- **`mcp/README.md`** — install for Claude Code (`claude mcp add`), Claude Desktop, Cursor, Codex CLI; tool table; browser↔MCP bridge; security notes.
+- **`/connect.html` Option 5** card ("FULL AUTONOMY · LOCAL AGENTS") with the `claude mcp add` one-liner + link to the setup guide.
+- **Honest caveat documented everywhere:** ChatGPT web / Codex *Cloud* run in a remote sandbox and can't reach a local server — they keep the prefill + Hand-off bridge. Only a remote backend could serve them, and that breaks the thesis.
+- The MCP package lives in the repo (`mcp/`) but is **not** deployed to Pages — it's a local tool. Pages still serves only `public/`.
+
 ### Phase 12 — Vibe-code audit remediation + legal/compliance pack (v3.2) — 2026-06-11
 Ran `/vibe-code-audit` against the v3.1 codebase. **Verdict: Go** — exceptionally clean (zero `eval`/`new Function`/`Math.random`/`console.log`/hardcoded secrets; zero runtime deps; AES-GCM + 310k PBKDF2; defensive `escapeHtml` on every user-controlled value; explicit-whitelist deserialization). Only 5 Low/Info hardening findings, all fixed here:
 - **VC-SEC-05 Low** — added tight `Content-Security-Policy` meta to `index.html` (`connect-src 'none'`) and `connect.html` (`connect-src 'self'` for snippet fetches). The vault already had one; the landing/onboarding pages did not.

@@ -41,7 +41,15 @@ No build step. No npm. No dependencies. Opens in any modern browser.
 
 ---
 
-## Claude Code — MCP integration (prefill hook)
+## AI agent integration — prefill bridge
+
+> **Want full autonomy** — the agent reads, writes, and generates keys directly,
+> no clicking Save? Install the **[local MCP server](mcp/README.md)** (see
+> [Local MCP server](#local-mcp-server) below). The prefill bridge described here
+> works with *any* agent including ChatGPT web / Codex Cloud; the MCP server works
+> with local agents (Claude Code, Claude Desktop, Cursor, Codex CLI).
+
+### Claude Code — prefill hook
 
 After Claude creates a key via MCP (Stripe, Cloudflare, etc.), it can open a URL that pre-fills the vault's "Add key" modal automatically.
 
@@ -76,6 +84,34 @@ Ask Claude: "Create a Stripe restricted API key for ITIL Sidekick and save it to
 Claude creates the key via Stripe MCP, then navigates to:
 http://localhost:8091/app.html#action=prefill&name=STRIPE_RESTRICTED_KEY&value=rk_live_xxx&type=api_key&project=ITIL+Sidekick&notes=Restricted+to+Charges+only
 ```
+
+---
+
+## Local MCP server
+
+For **full autonomy** with local agents — *"Claude, create a Stripe key and save
+it to KeyVault project ITIL"* and it does it all — install the local MCP server in
+[`mcp/`](mcp/).
+
+- **Local, not remote.** It runs on your machine over a local AES-256-GCM vault
+  file. Secrets never touch a network — a *remote* MCP would have to store and
+  return your plaintext secrets, which KeyVault never does.
+- **Same `.vault` format as the web app** (verified byte-for-byte, both
+  directions) — bridge the two via Settings → Import / Export `.vault`.
+- **8 tools:** list / get / save / delete keys, list / create projects, generate
+  values, export `.env`.
+- **Works with** Claude Code, Claude Desktop, Cursor, Codex CLI. ChatGPT web /
+  Codex Cloud can't reach a local server — they use the prefill bridge above.
+
+Quick start (Claude Code):
+
+```bash
+git clone https://github.com/boblauzon/keyvault-sidekick
+claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs
+```
+
+Full setup (Desktop / Cursor / Codex CLI), the tool list, the browser ↔ MCP
+bridge, and the security model: **[mcp/README.md](mcp/README.md)**.
 
 ---
 
