@@ -30,6 +30,21 @@ export const VALID_TYPES = new Set(['api_key', 'secret', 'token', 'oauth', 'webh
 export const VAULT_PATH = process.env.KEYVAULT_VAULT_PATH ||
   join(homedir(), '.keyvault-sidekick', 'vault.json');
 
+// Resolve a secret from an env var, or from a file named by a `*_FILE` env var
+// (so the master password needn't sit inline in the agent's MCP config — point
+// it at a 0600 file instead). The file is read UTF-8 with one trailing newline
+// stripped. The direct env var wins if both are set.
+export function resolveSecret(envVar, fileEnvVar) {
+  const direct = process.env[envVar];
+  if (direct != null && direct !== '') return direct;
+  const path = process.env[fileEnvVar];
+  if (path) {
+    try { return readFileSync(path, 'utf8').replace(/\r?\n$/, ''); }
+    catch (e) { throw new Error(`Cannot read ${fileEnvVar} (${path}): ${e?.message || e}`); }
+  }
+  return undefined;
+}
+
 // ── Encoding (standard base64, matching btoa/atob) ───────────────────────────
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -143,8 +158,8 @@ let CACHE = null; // { vault, key, salt:Uint8Array, iterations }
 
 async function ensureLoaded(forWrite) {
   if (CACHE) return CACHE;
-  const password = process.env.KEYVAULT_PASSWORD;
-  if (!password) throw new Error('KEYVAULT_PASSWORD is not set. Export your KeyVault master password first.');
+  const password = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE');
+  if (!password) throw new Error('No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.');
   const norm = normalizePassword(password);
 
   if (existsSync(VAULT_PATH)) {
@@ -299,26 +314,30 @@ export async function exportEnv(project, format = 'env') {
 // open the vault, plus project/key counts — NEVER any secret values. Safe to run
 // anytime; this is the first thing to reach for when "it won't connect".
 export async function status() {
+  let pw, resolveErr = null;
+  try { pw = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE'); }
+  catch (e) { resolveErr = String(e?.message || e); }
   const out = {
     vaultPath: VAULT_PATH,
-    passwordSet: !!process.env.KEYVAULT_PASSWORD,
+    passwordSet: !!pw,
     exists: existsSync(VAULT_PATH),
     unlocked: false,
   };
+  if (resolveErr) { out.error = resolveErr; return out; }
   if (!out.exists) {
     out.note = 'No vault file yet — your first save will CREATE one, encrypted with the current ' +
-               'KEYVAULT_PASSWORD. Double-check that password before the first save, because a typo ' +
+               'master password. Double-check that password before the first save, because a typo ' +
                'would lock the new vault to the typo.';
     return out;
   }
-  if (!out.passwordSet) { out.error = 'KEYVAULT_PASSWORD is not set.'; return out; }
+  if (!out.passwordSet) { out.error = 'No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.'; return out; }
   let blob;
   try { blob = JSON.parse(readFileSync(VAULT_PATH, 'utf8')); }
   catch { out.error = 'Vault file is not valid JSON: ' + VAULT_PATH; return out; }
   try { validateBlob(blob); } catch (e) { out.error = String(e?.message || e); return out; }
   try {
     const salt = fromBase64(blob.kdf.salt);
-    const key = await deriveKey(normalizePassword(process.env.KEYVAULT_PASSWORD), salt, blob.kdf.iterations, blob.kdf.hash);
+    const key = await deriveKey(normalizePassword(pw), salt, blob.kdf.iterations, blob.kdf.hash);
     const vault = normalizeVault(JSON.parse(await decrypt(blob.cipher, key)));
     out.unlocked = true;
     out.projects = vault.projects.length;
@@ -326,7 +345,7 @@ export async function status() {
     out.kdfIterations = blob.kdf.iterations;
   } catch (e) {
     out.error = (e && e.name === 'OperationError')
-      ? 'Incorrect master password — KEYVAULT_PASSWORD does not match this vault.'
+      ? 'Incorrect master password — the configured password does not match this vault.'
       : 'Vault is corrupt or unreadable: ' + (e?.message || e);
   }
   return out;

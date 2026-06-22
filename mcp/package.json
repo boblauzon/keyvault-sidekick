@@ -1,6 +1,6 @@
 {
   "name": "keyvault-sidekick-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Local MCP server + `keyvault` CLI for KeyVault Sidekick — lets Claude Code / Claude Desktop / Cursor / Codex CLI generate, store, retrieve, and securely deploy API keys from a local AES-256-GCM encrypted vault. Zero dependencies, secrets never leave your machine.",
   "type": "module",
   "bin": {

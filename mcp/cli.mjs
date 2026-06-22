@@ -23,10 +23,10 @@
 import {
   VAULT_PATH,
   listProjects, listKeys, getKey, saveKey, generate, generateValue, exportEnv, createProject, deleteKey,
-  status as vaultStatus, changePassword,
+  status as vaultStatus, changePassword, resolveSecret,
 } from './vault-core.mjs';
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
@@ -90,7 +90,8 @@ Secure deploy examples:
   keyvault generate jwt --save --project Velocity --name AUTH_SECRET | wrangler secret put AUTH_SECRET
   openssl rand -hex 16 | keyvault save Velocity WEBHOOK_SIGNING_KEY
 
-Config: KEYVAULT_PASSWORD (required), KEYVAULT_VAULT_PATH (default ${VAULT_PATH}).`;
+Config: KEYVAULT_PASSWORD (or KEYVAULT_PASSWORD_FILE — a 0600 file holding it),
+        KEYVAULT_VAULT_PATH (default ${VAULT_PATH}).`;
 
 async function main() {
   const { positionals, flags } = parseArgs(process.argv.slice(2));
@@ -122,10 +123,10 @@ async function main() {
       return;
     }
     case 'change-password': {
-      let newPw = process.env.KEYVAULT_NEW_PASSWORD;
+      let newPw = resolveSecret('KEYVAULT_NEW_PASSWORD', 'KEYVAULT_NEW_PASSWORD_FILE');
       if (!newPw) {
         if (process.stdin.isTTY) {
-          throw new Error('Provide the NEW password via stdin or KEYVAULT_NEW_PASSWORD, e.g.\n' +
+          throw new Error('Provide the NEW password via stdin, KEYVAULT_NEW_PASSWORD, or KEYVAULT_NEW_PASSWORD_FILE, e.g.\n' +
             '  KEYVAULT_NEW_PASSWORD=newpass keyvault change-password\n' +
             '  printf %s "newpass" | keyvault change-password');
         }

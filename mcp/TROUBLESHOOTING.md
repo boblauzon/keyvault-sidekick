@@ -169,11 +169,21 @@ in [`README.md`](README.md).
 
 ---
 
-## 7. "KEYVAULT_PASSWORD is not set"
+## 7. "No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE"
 
-The server has no password to work with. Make sure your config passes it as an env
-var (`--env KEYVAULT_PASSWORD=…` for Claude Code, or the `env` block in other
-clients), then restart.
+The server has no password to work with. Provide **one** of:
+
+- `--env KEYVAULT_PASSWORD=…` (inline), or
+- `--env KEYVAULT_PASSWORD_FILE=/path/to/0600/file` — keeps the password **out of
+  your agent config**; the file is read at startup (one trailing newline stripped).
+
+```sh
+umask 177 && printf %s 'your-master-password' > ~/.keyvault-sidekick/password
+claude mcp add keyvault --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
+```
+
+Then restart the agent. (`change-password` takes the same forms for the new
+password: `KEYVAULT_NEW_PASSWORD` / `KEYVAULT_NEW_PASSWORD_FILE` / stdin.)
 
 ---
 

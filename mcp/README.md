@@ -93,8 +93,12 @@ Two environment variables:
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `KEYVAULT_PASSWORD` | **yes** | — | Your master password. Used only to derive the AES key; never written anywhere. |
+| `KEYVAULT_PASSWORD` | yes* | — | Your master password. Used only to derive the AES key; never written anywhere. |
+| `KEYVAULT_PASSWORD_FILE` | yes* | — | Alternative to the above: a path to a `0600` file holding the master password (read at startup, one trailing newline stripped). Keeps the password **out of your agent config**. The direct env var wins if both are set. |
 | `KEYVAULT_VAULT_PATH` | no | `~/.keyvault-sidekick/vault.json` | Where the encrypted vault file lives. Point it at a `.vault` exported from the web app to share one store. |
+
+\* Provide **one** of `KEYVAULT_PASSWORD` or `KEYVAULT_PASSWORD_FILE`. The file
+form is more secure — see [Security notes](#security-notes).
 
 ---
 
@@ -232,11 +236,16 @@ and per-client config locations — is in **[TROUBLESHOOTING.md](TROUBLESHOOTING
 
 - **Secrets never leave your machine.** No network calls, ever.
 - **The vault file is written `0600`** (owner read/write only) on POSIX systems.
-- **`KEYVAULT_PASSWORD` lives wherever you put it.** If you place it in an agent
-  config file, that file becomes sensitive — protect it (`chmod 600`) or, better,
-  export the variable from your shell profile / a secrets manager rather than
-  hard-coding it. This is the inherent tradeoff of a non-interactive server: it
-  needs the password to decrypt without prompting.
+- **Keep the master password out of your agent config.** A non-interactive server
+  needs the password without prompting, but you don't have to inline it. Prefer
+  **`KEYVAULT_PASSWORD_FILE`** pointed at a locked-down file:
+  ```sh
+  umask 177 && printf %s 'your-master-password' > ~/.keyvault-sidekick/password   # 0600
+  claude mcp add keyvault --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
+  ```
+  That way the config holds only a path, and the secret sits in one `0600` file you
+  control. If you do use the inline `KEYVAULT_PASSWORD` env var, treat the config
+  file as sensitive (`chmod 600`).
 - **Forgotten password = unrecoverable vault**, by design. Keep a `.vault` backup.
 - **No dependencies.** This server is one auditable file (`index.mjs`) using only
   Node built-ins — the same zero-supply-chain posture as the web app.
