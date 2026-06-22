@@ -2842,8 +2842,39 @@ Acknowledge that you're connected to my "${name}" project and list the key names
         );
       }
 
-      // The modal: pick the target agent, preview the exact prompt, copy it.
+      // Full-automation path: the local MCP server install. Generic (works for any
+      // clone of the repo) — the MCP connects the WHOLE vault, not one project.
+      function buildMcpInstall() {
+        return (
+`git clone https://github.com/boblauzon/keyvault-sidekick
+claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs`
+        );
+      }
+
+      // Project-aware kickoff prompt to paste once the MCP server is installed —
+      // tells the agent to manage THIS project hands-free, and bakes in the
+      // value-stays-out-of-chat CLI habit.
+      function buildMcpKickoff(project) {
+        const name = project.name;
+        return (
+`You have the KeyVault Sidekick MCP server installed. Tools: keyvault_list_projects, keyvault_list_keys, keyvault_get_key, keyvault_save_key, keyvault_generate, keyvault_export_env, keyvault_create_project, keyvault_delete_key.
+
+We're working in my KeyVault project "${name}". Manage its secrets directly and hands-free — don't ask me to click anything:
+- Generate new secrets with keyvault_generate (set save=true, project="${name}", name=...).
+- Store keys you fetch or create with keyvault_save_key (project "${name}").
+- See what's there with keyvault_list_keys; export a project with keyvault_export_env.
+Only read a value with keyvault_get_key when a task actually needs it. When deploying a secret, prefer the keyvault CLI so the value stays out of this chat:
+  keyvault get "${name}" KEY_NAME | your-deploy-command
+
+Confirm you're connected by listing the keys currently in "${name}".`
+        );
+      }
+
+      // The modal: two ways to connect — a paste-ready prompt (names-only bridge,
+      // the agent orchestrates + you confirm saves) or the local MCP server (full
+      // hands-free automation). Pick mode/agent, preview the exact text, copy it.
       function openConnectAIModal(project) {
+        let mode = 'prompt';   // 'prompt' | 'mcp'
         let agentId = 'claude';
         const agentButtons = Object.entries(CONNECT_AGENTS)
           .map(([id, a]) => `<button type="button" class="gen-pill${id === agentId ? ' active' : ''}" data-agent="${id}">${escapeHtml(a.label)}</button>`)
@@ -2852,19 +2883,52 @@ Acknowledge that you're connected to my "${name}" project and list the key names
         openModal({
           title: `Connect AI to "${escapeHtml(project.name)}"`,
           body: `
-            <p class="modal-help">
-              Copies a ready-to-paste prompt that tells your coding agent it's working in
-              <strong>${escapeHtml(project.name)}</strong> — the key <em>names</em> here plus how to
-              save new keys. <strong>Secret values are never included.</strong> Hand those over with
-              “Hand off to AI&nbsp;↗” only when a task needs them.
-            </p>
-            <div class="field">
-              <label>AI agent</label>
-              <div class="format-pills" id="connect-agent-pills">${agentButtons}</div>
+            <div class="format-pills" id="connect-mode-pills" style="margin-bottom:14px">
+              <button type="button" class="gen-pill active" data-mode="prompt">💬 Paste a prompt</button>
+              <button type="button" class="gen-pill" data-mode="mcp">🤖 Full automation</button>
             </div>
-            <div class="field">
-              <label for="connect-output">Prompt preview — paste this as your first message</label>
-              <textarea class="export-output" id="connect-output" readonly spellcheck="false" rows="14">${escapeHtml(buildConnectPrompt(project, agentId))}</textarea>
+
+            <div id="connect-pane-prompt">
+              <p class="modal-help">
+                A ready-to-paste prompt telling your agent it's working in
+                <strong>${escapeHtml(project.name)}</strong> — the key <em>names</em> here plus how to
+                save new keys. <strong>Secret values are never included</strong>: the agent orchestrates,
+                you confirm each save. Use “Hand off to AI&nbsp;↗” to give it a value on demand.
+              </p>
+              <div class="field">
+                <label>AI agent</label>
+                <div class="format-pills" id="connect-agent-pills">${agentButtons}</div>
+              </div>
+              <div class="field">
+                <label for="connect-output">Prompt preview — paste as your first message</label>
+                <textarea class="export-output" id="connect-output" readonly spellcheck="false" rows="13">${escapeHtml(buildConnectPrompt(project, agentId))}</textarea>
+              </div>
+            </div>
+
+            <div id="connect-pane-mcp" style="display:none">
+              <p class="modal-help">
+                <strong>Hands-free.</strong> Install the local MCP server once and your agent
+                generates, saves, reads, and manages keys <em>directly</em> — no Save clicks, secrets
+                stay in a local encrypted file. Local agents only (Claude Code, Claude Desktop,
+                Cursor, Codex CLI — not ChatGPT web / Codex Cloud).
+              </p>
+              <div class="field">
+                <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <span>1 · Install — run in your terminal</span>
+                  <button type="button" class="gen-pill" id="connect-mcp-install-copy" style="padding:3px 10px">Copy</button>
+                </label>
+                <textarea class="export-output" id="connect-mcp-install" readonly spellcheck="false" rows="3">${escapeHtml(buildMcpInstall())}</textarea>
+                <p class="gen-help" style="margin-top:6px">
+                  Replace <code>your-master-password</code> and run it yourself — it's stored in plain
+                  text in your MCP config. Already have the repo? Skip the clone and point
+                  <code>node</code> at its <code>mcp/index.mjs</code>. Full setup for Claude Desktop /
+                  Cursor / Codex → <a href="/connect.html" target="_blank" rel="noopener">Connect page, Option 5</a>.
+                </p>
+              </div>
+              <div class="field">
+                <label for="connect-mcp-kickoff">2 · Kickoff — paste in your agent after restarting it</label>
+                <textarea class="export-output" id="connect-mcp-kickoff" readonly spellcheck="false" rows="11">${escapeHtml(buildMcpKickoff(project))}</textarea>
+              </div>
             </div>
           `,
           footer: `
@@ -2872,9 +2936,27 @@ Acknowledge that you're connected to my "${name}" project and list the key names
             <button type="button" class="primary" id="connect-copy">Copy prompt</button>
           `,
           onMount: (root) => {
-            const output = root.querySelector('#connect-output');
-            const copyBtn = root.querySelector('#connect-copy');
+            const promptPane = root.querySelector('#connect-pane-prompt');
+            const mcpPane    = root.querySelector('#connect-pane-mcp');
+            const output     = root.querySelector('#connect-output');
+            const kickoff    = root.querySelector('#connect-mcp-kickoff');
+            const install    = root.querySelector('#connect-mcp-install');
+            const copyBtn    = root.querySelector('#connect-copy');
 
+            // Mode toggle: prompt bridge vs full-automation MCP.
+            root.querySelectorAll('#connect-mode-pills .gen-pill').forEach(btn => {
+              btn.addEventListener('click', () => {
+                mode = btn.dataset.mode;
+                root.querySelectorAll('#connect-mode-pills .gen-pill')
+                  .forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+                const isPrompt = mode === 'prompt';
+                promptPane.style.display = isPrompt ? '' : 'none';
+                mcpPane.style.display    = isPrompt ? 'none' : '';
+                copyBtn.textContent = isPrompt ? 'Copy prompt' : 'Copy kickoff';
+              });
+            });
+
+            // Agent toggle (prompt mode).
             root.querySelectorAll('#connect-agent-pills .gen-pill').forEach(btn => {
               btn.addEventListener('click', () => {
                 agentId = btn.dataset.agent;
@@ -2884,14 +2966,30 @@ Acknowledge that you're connected to my "${name}" project and list the key names
               });
             });
 
+            // Inline copy for the MCP install command.
+            const installCopy = root.querySelector('#connect-mcp-install-copy');
+            installCopy.addEventListener('click', async () => {
+              try {
+                await copyToClipboard(install.value);
+                const old = installCopy.textContent;
+                installCopy.textContent = '✓';
+                showToast('Install command copied');
+                setTimeout(() => { installCopy.textContent = old; }, 1500);
+              } catch { showToast('Could not copy', 'err'); }
+            });
+
             root.querySelector('#connect-close').addEventListener('click', closeModal);
 
+            // Footer copy — context-aware: connect prompt (prompt mode) or kickoff (mcp mode).
             copyBtn.addEventListener('click', async () => {
+              const text = mode === 'prompt' ? output.value : kickoff.value;
               try {
-                await copyToClipboard(output.value);   // WYSIWYG: copy exactly what's previewed
+                await copyToClipboard(text);   // WYSIWYG: copy exactly what's previewed
                 const old = copyBtn.textContent;
                 copyBtn.textContent = '✓ Copied';
-                showToast(`Connect prompt copied (${CONNECT_AGENTS[agentId].label})`);
+                showToast(mode === 'prompt'
+                  ? `Connect prompt copied (${CONNECT_AGENTS[agentId].label})`
+                  : 'Kickoff prompt copied — paste after installing the MCP');
                 setTimeout(() => { copyBtn.textContent = old; }, 1800);
               } catch {
                 showToast('Could not copy', 'err');
