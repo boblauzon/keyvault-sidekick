@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- CSP: this guide is static content — no fetches, no script loads. The Ko-fi
+       and GitHub links are plain navigations. connect-src 'none' is enforceable. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A simple, step-by-step guide to KeyVault Sidekick — create a vault, add or generate keys, use them in your projects, and connect your AI assistant.">
+  <meta name="referrer" content="no-referrer">
+  <title>Getting Started · KeyVault Sidekick</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    main { max-width: 860px; margin: 0 auto; padding: 40px 24px 100px; position: relative; z-index: 1; }
+    .page-eyebrow { font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--teal-400); margin-bottom: 6px; }
+    .page-title { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0; }
+    @media (max-width: 560px) { .page-title { font-size: 28px; } }
+    .page-lede { color: var(--text-dim); margin: 14px 0 0 0; font-size: 16px; line-height: 1.65; max-width: 680px; }
+
+    /* Info / callout boxes */
+    .box {
+      border-radius: var(--r-xl); padding: 20px 24px; margin: 28px 0;
+      font-size: 14px; line-height: 1.7; color: var(--text-dim);
+    }
+    .box h3 { margin: 0 0 10px 0; font-size: 13px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .box strong { color: white; }
+    .box code { font-size: 12px; }
+    .box.info  { background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.25); }
+    .box.info h3  { color: var(--info); }
+    .box.warn  { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.30); }
+    .box.warn h3  { color: var(--warn, #fbbf24); }
+    .box.accent { background: linear-gradient(135deg, rgba(45,212,191,0.05), rgba(6,182,212,0.05)); border: 1px solid rgba(45,212,191,0.25); }
+    .box.accent h3 { color: var(--teal-400); }
+    .box ul { margin: 8px 0 0 0; padding-left: 18px; }
+    .box li { margin-bottom: 6px; }
+
+    /* Time-to-finish chips */
+    .meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 9999px;
+      background: rgba(15,23,42,0.6); border: 1px solid var(--border);
+      font-size: 12px; color: var(--text-dim); font-family: var(--mono);
+    }
+    .meta-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal-400); }
+
+    /* Steps */
+    .step {
+      display: grid; grid-template-columns: 44px 1fr; gap: 18px;
+      padding: 26px 0; border-top: 1px solid var(--border);
+    }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--bg, #020617);
+      background: linear-gradient(135deg, var(--teal-400), var(--cyan-400));
+      flex-shrink: 0;
+    }
+    .step-body h2 { margin: 4px 0 8px 0; font-size: 21px; color: white; font-weight: 700; letter-spacing: -0.01em; }
+    .step-body p  { margin: 0 0 12px 0; color: var(--text-dim); font-size: 15px; line-height: 1.7; }
+    .step-body p:last-child { margin-bottom: 0; }
+    .step-body strong { color: white; }
+    .step-body code, .ui {
+      font-family: var(--mono); font-size: 13px;
+      background: rgba(2,6,23,0.6); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 1px 6px; color: var(--teal-300);
+    }
+    .step-body ol, .step-body ul { margin: 0 0 12px 0; padding-left: 20px; color: var(--text-dim); font-size: 15px; line-height: 1.75; }
+    .step-body li { margin-bottom: 7px; }
+    .step-body li strong { color: white; }
+
+    .mode-card {
+      background: rgba(15,23,42,0.5);
+      border: 1px solid var(--border); border-radius: var(--r-lg);
+      padding: 18px 20px; margin: 14px 0;
+    }
+    .mode-card .mode-title { font-size: 15px; font-weight: 700; color: white; margin: 0 0 6px 0; }
+    .mode-card .mode-title .tag { font-size: 11px; font-family: var(--mono); color: var(--teal-400); font-weight: 500; }
+
+    .code-mini {
+      background: rgba(2,6,23,0.7); border: 1px solid var(--border-strong);
+      border-radius: var(--r-md); padding: 12px 14px; margin: 10px 0 0 0;
+      font-family: var(--mono); font-size: 12px; line-height: 1.6;
+      color: var(--teal-300); overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* FAQ */
+    .faq { margin-top: 14px; }
+    .faq details {
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      padding: 0; margin-bottom: 10px; background: rgba(15,23,42,0.4);
+      overflow: hidden;
+    }
+    .faq summary {
+      cursor: pointer; padding: 14px 18px; font-size: 15px; color: white; font-weight: 600;
+      list-style: none; user-select: none;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::before { content: "+  "; color: var(--teal-400); font-family: var(--mono); }
+    .faq details[open] summary::before { content: "–  "; }
+    .faq summary:hover { background: rgba(2,6,23,0.4); }
+    .faq .faq-body { padding: 0 18px 16px 18px; color: var(--text-dim); font-size: 14px; line-height: 1.7; }
+    .faq .faq-body code { font-size: 12px; }
+
+    .next-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+
+    .section-label {
+      font-size: 12px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-mute); margin: 44px 0 4px 0;
+    }
+  </style>
+</head>
+<body class="bg-gradient-page">
+
+  <div class="orbs">
+    <div class="orb orb-tl"></div>
+    <div class="orb orb-br"></div>
+  </div>
+
+  <div class="page-content">
+    <header class="topbar">
+      <a href="/" class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">KeyVault Sidekick</span>
+          <span class="brand-sub">by VibeProSoft</span>
+        </span>
+      </a>
+      <div class="topbar-actions">
+        <a href="/" class="btn ghost">Home</a>
+        <a href="/connect.html" class="btn ghost">Connect AI</a>
+        <a href="https://ko-fi.com/roblauzon" target="_blank" rel="noopener noreferrer" class="btn btn-kofi" title="Support KeyVault on Ko-fi">☕ Support</a>
+        <a href="/app.html" class="btn primary">Open vault</a>
+      </div>
+    </header>
+
+    <main>
+      <div style="margin-bottom: 8px;">
+        <div class="page-eyebrow">📖 Getting Started</div>
+        <h1 class="page-title">How to use KeyVault Sidekick</h1>
+        <p class="page-lede">
+          A friendly, step-by-step walkthrough — no technical background needed.
+          In about five minutes you'll have a private, encrypted vault for your
+          passwords and API keys, and (if you want) your AI assistant helping you
+          manage them.
+        </p>
+        <div class="meta-row">
+          <span class="meta-chip"><span class="dot"></span> ~5 minutes</span>
+          <span class="meta-chip"><span class="dot"></span> No sign-up</span>
+          <span class="meta-chip"><span class="dot"></span> Nothing to install (Steps 1–4)</span>
+        </div>
+      </div>
+
+      <div class="box info">
+        <h3>What is KeyVault Sidekick?</h3>
+        <p style="margin:0">
+          It's a free, private place to keep your <strong>secrets</strong> — passwords,
+          API keys, and tokens. Everything is locked with a single master password and
+          stored <strong>only on your own device</strong>. There's no sign-up and no
+          company server, so your secrets never travel anywhere. Close the tab and they
+          stay safely encrypted in your browser until you come back.
+        </p>
+      </div>
+
+      <div class="box warn">
+        <h3>⚠ Before you start — the one rule that matters</h3>
+        <ul style="margin:0">
+          <li>All you need is a <strong>web browser</strong> (Chrome, Edge, Firefox, or Safari).</li>
+          <li>Pick a master password you'll remember. A long phrase like
+            <code>purple-otter-rides-the-train</code> is both strong and easy to recall.</li>
+          <li><strong>There is no "forgot password."</strong> If you lose it, the vault can't be
+            opened — by design, because no one (not even us) can see inside it. We'll make a
+            backup in Step 6.</li>
+        </ul>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h2>Open the app and create your vault</h2>
+          <ol>
+            <li>Go to <strong>keyvault-sidekick.pages.dev</strong> and click <span class="ui">Open vault</span>.</li>
+            <li>The first time, you'll see <strong>Create your vault</strong>. Type your master
+              password twice, then click <span class="ui">Create vault</span>.</li>
+            <li>That's it — you're in. Next time you visit, you'll just type the same password to
+              <span class="ui">Unlock</span>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h2>Make a project</h2>
+          <p>Projects are simple folders that group related keys together — for example, one
+            project per app or website.</p>
+          <ol>
+            <li>Click <span class="ui">+ New project</span>.</li>
+            <li>Give it a name (e.g. <em>My Website</em>), pick a color, and click
+              <span class="ui">Create project</span>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h2>Add your keys</h2>
+          <p>You can store a key you already have, <em>or</em> let KeyVault generate a strong new one.</p>
+          <ul>
+            <li><strong>I already have a key:</strong> click <span class="ui">+ Add key</span>, fill in the
+              <strong>Name</strong> (e.g. <code>STRIPE_SECRET</code>), paste the <strong>Value</strong>,
+              choose a <strong>Type</strong>, and click <span class="ui">Save</span>.</li>
+            <li><strong>Make a new strong one:</strong> click <span class="ui">+ Quick generate ▾</span> and
+              pick what you need — a password, API key, JWT secret, UUID, and more. It's created and
+              saved instantly. (The <span class="ui">Generator</span> tab at the top gives you more options.)</li>
+          </ul>
+          <p>Every key has <span class="ui">Show / Hide</span> and <span class="ui">Copy</span> buttons.
+            Values stay hidden until you choose to reveal them.</p>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h2>Use your keys in your projects</h2>
+          <p>When you need your keys somewhere else — like a <code>.env</code> file for an app:</p>
+          <ul>
+            <li><span class="ui">Copy as .env</span> — copies the whole project as
+              <code>NAME="value"</code> lines.</li>
+            <li>The small <span class="ui">.env</span> button on a single key copies just that one.</li>
+            <li>The <span class="ui">Export</span> tab lets you choose specific keys and a format
+              (<code>.env</code>, <code>.envrc</code>, or <code>settings.json</code>), then Copy or Download.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h2>Connect your AI assistant <span style="font-size:12px;font-family:var(--mono);color:var(--teal-400)">NEW</span></h2>
+          <p>Want your AI coding assistant (like Claude Code or ChatGPT) to help with your keys?
+            Open a project and click <span class="ui">🔌 Connect to AI</span>. You'll see two choices:</p>
+
+          <div class="mode-card">
+            <div class="mode-title">💬 Paste a prompt <span class="tag">· the easy way</span></div>
+            <ol style="margin-bottom:0">
+              <li>Pick your assistant (Claude Code, ChatGPT Codex, or any AI).</li>
+              <li>Click <span class="ui">Copy prompt</span> and paste it as your first message in that assistant.</li>
+            </ol>
+            <p style="margin:12px 0 0 0;color:var(--text-dim);font-size:14px;line-height:1.7">
+              Your assistant now knows your project and the <em>names</em> of your keys, and can help
+              you save new ones. <strong>Your secret values are never put into the chat</strong> — when
+              the assistant saves a key, KeyVault pops open so you can review and click
+              <span class="ui">Save</span>.
+            </p>
+          </div>
+
+          <div class="mode-card">
+            <div class="mode-title">🤖 Full automation <span class="tag">· hands-free, for more technical users</span></div>
+            <p style="margin:0 0 8px 0;color:var(--text-dim);font-size:14px;line-height:1.7">
+              This installs a small local helper (an <strong>MCP server</strong>) so your AI can create,
+              save, read, and manage keys <em>by itself</em> — no clicking. The modal gives you a one-line
+              install command and a ready-to-paste kickoff message. It works with local AI tools
+              (Claude&nbsp;Code, Claude&nbsp;Desktop, Cursor, Codex&nbsp;CLI).
+            </p>
+            <p style="margin:0;color:var(--text-mute);font-size:13px;line-height:1.7">
+              Full step-by-step install (including Claude Desktop / Cursor / Codex) lives on the
+              <a href="/connect.html">Connect page</a>, Option 5. Set it up with the wrong password? Ask
+              your AI to run <span class="ui">keyvault_status</span> (or run <code>keyvault status</code>
+              in a terminal), then follow the
+              <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/TROUBLESHOOTING.md" target="_blank" rel="noopener">troubleshooting guide</a>.
+            </p>
+          </div>
+
+          <p style="margin-top:14px"><strong>Bonus:</strong> the <span class="ui">Hand off to AI ↗</span>
+            button hands your assistant the actual <em>values</em> for a specific task — only when it
+            needs them, with a "don't echo these" guardrail.</p>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h2>Back up your vault &amp; stay safe</h2>
+          <p>Because there's no password recovery, a backup is your safety net:</p>
+          <ol>
+            <li>Click the <span class="ui">⚙ Settings</span> gear → <span class="ui">Export .vault</span>.
+              This saves an <strong>encrypted</strong> backup file. Keep it somewhere safe — it still needs
+              your master password to open.</li>
+            <li>To move your vault to another device, copy that file there and use
+              <span class="ui">Import .vault</span>.</li>
+          </ol>
+          <p>Other good habits, all in <span class="ui">Settings</span>: turn on <strong>auto-lock</strong>
+            (locks the vault when idle), <strong>clipboard auto-clear</strong>, and you can
+            <strong>change your master password</strong> anytime.</p>
+        </div>
+      </div>
+
+      <div class="box accent" style="margin-top:32px">
+        <h3>🎉 You're done!</h3>
+        <p style="margin:0">
+          You now have a private, encrypted vault and know how to add, use, back up, and (optionally)
+          let your AI manage your keys. Everything stays on your device — no accounts, no servers, no
+          surprises.
+        </p>
+      </div>
+
+      <div class="section-label">Quick answers</div>
+      <div class="faq">
+        <details>
+          <summary>Is it really private?</summary>
+          <div class="faq-body">Yes. KeyVault Sidekick is open-source and makes <strong>zero network
+            requests</strong> — your keys never leave your device. You can even save the page and run it
+            offline. There are no accounts, analytics, or telemetry.</div>
+        </details>
+        <details>
+          <summary>I forgot my master password — can you reset it?</summary>
+          <div class="faq-body">No, and that's the point: no one can see inside your vault, including us,
+            so there's no reset. If you have a <code>.vault</code> backup you can restore it (you'll still
+            need the password it was saved with). Otherwise you can wipe and start fresh in Settings.</div>
+        </details>
+        <details>
+          <summary>Where exactly are my keys stored?</summary>
+          <div class="faq-body">Encrypted in <strong>this browser, on this device</strong>. A different
+            browser or device is a separate, empty vault — move yours by exporting a <code>.vault</code>
+            file and importing it on the other device.</div>
+        </details>
+        <details>
+          <summary>What's the difference between "Connect to AI" and "Hand off to AI"?</summary>
+          <div class="faq-body"><strong>Connect to AI</strong> introduces your assistant to a project (its
+            key <em>names</em> and how to save more) without sharing any secret values.
+            <strong>Hand off to AI</strong> gives the assistant the actual <em>values</em> for a task, on
+            demand. And <strong>Full automation</strong> (the MCP server) lets a local assistant do it all
+            itself.</div>
+        </details>
+        <details>
+          <summary>My AI assistant can't connect, or I set the wrong password</summary>
+          <div class="faq-body">This only applies to <strong>Full automation</strong> (the MCP server).
+            Ask your assistant to run <code>keyvault_status</code> — it says whether your password opened
+            the vault, without showing any secrets. If it's the wrong password, the fix (reinstall with the
+            right one, re-key the vault, or start fresh) is in the
+            <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/TROUBLESHOOTING.md" target="_blank" rel="noopener">troubleshooting guide</a>.
+            The "Paste a prompt" mode never needs this.</div>
+        </details>
+        <details>
+          <summary>Does it cost anything?</summary>
+          <div class="faq-body">No — it's free and open, and always will be. If it saves you time, a
+            ☕ <a href="https://ko-fi.com/roblauzon" target="_blank" rel="noopener noreferrer">Ko-fi</a>
+            tip is appreciated but never required.</div>
+        </details>
+      </div>
+
+      <div class="next-links">
+        <a href="/app.html" class="btn primary large">Open the vault
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="/connect.html" class="btn large">Connect your AI →</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        © 2026 VibeProSoft ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick">GitHub</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/GETTING-STARTED.md">Guide</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/PRIVACY.md">Privacy</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/TERMS.md">Terms</a> ·
+        <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/SECURITY.md">Security</a>
+      </div>
+      <div>v3.5 · Free &amp; open</div>
+    </footer>
+  </div>
+</body>
+</html>

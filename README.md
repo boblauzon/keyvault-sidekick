@@ -8,6 +8,8 @@ Built for Claude Code users on the Cloudflare stack — organizing project secre
 
 **Live:** https://keyvault-sidekick.pages.dev
 
+**New here? → [Getting Started guide](GETTING-STARTED.md)** — a plain-language, step-by-step walkthrough for any skill level (also built into the app at [keyvault-sidekick.pages.dev/guide.html](https://keyvault-sidekick.pages.dev/guide.html)).
+
 ---
 
 ## What it does
