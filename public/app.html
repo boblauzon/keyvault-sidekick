@@ -740,7 +740,7 @@
       </span>
       <span class="appfoot-item">
         <button type="button" class="appfoot-link" id="appfoot-verify">Verify ↗</button>
-        <span class="appfoot-version">v3.4 · Free &amp; open</span>
+        <span class="appfoot-version">v3.5 · Free &amp; open</span>
       </span>
     </footer>
   </div>
@@ -1607,6 +1607,7 @@
                   </div>
                 </details>
                 <button type="button" id="btn-copy-env" title="Copy every key as KEY=value lines (.env format)">Copy as .env</button>
+                <button type="button" id="btn-connect-ai" title="Copy a ready-to-paste connect prompt for your AI — key names only, never the secret values">🔌 Connect to AI</button>
                 <button type="button" id="btn-handoff-ai" title="Copy a paste-ready prompt for Claude Code / ChatGPT Codex">Hand off to AI ↗</button>
                 <button type="button" id="btn-import-env">Import .env</button>
               </div>
@@ -1652,10 +1653,16 @@
         const handoffBtn = document.getElementById('btn-handoff-ai');
         if (handoffBtn) handoffBtn.addEventListener('click', () => copyForAIHandoff(project));
 
+        // v3.5: "Connect to AI" — prefilled onboarding prompt (key NAMES only).
+        const connectBtn = document.getElementById('btn-connect-ai');
+        if (connectBtn) connectBtn.addEventListener('click', () => openConnectAIModal(project));
+
         const emptyAdd = document.getElementById('btn-empty-add-key');
         if (emptyAdd) emptyAdd.addEventListener('click', () => openKeyModal(project.id, null));
         const emptyImport = document.getElementById('btn-empty-import');
         if (emptyImport) emptyImport.addEventListener('click', () => openImportEnvModal(project.id));
+        const emptyConnect = document.getElementById('btn-empty-connect');
+        if (emptyConnect) emptyConnect.addEventListener('click', () => openConnectAIModal(project));
 
         const search = document.getElementById('search');
         if (search) {
@@ -1687,6 +1694,7 @@
               <div class="actions" style="justify-content:center">
                 <button type="button" class="primary large" id="btn-empty-add-key">+ Add key</button>
                 <button type="button" class="large" id="btn-empty-import">Import .env</button>
+                <button type="button" class="large" id="btn-empty-connect" title="Copy a ready-to-paste connect prompt for your AI">🔌 Connect to AI</button>
               </div>
             </div>
           `;
@@ -2778,6 +2786,119 @@
         } catch {
           showToast('Could not copy', 'err');
         }
+      }
+
+      // ── v3.5: "Connect to AI" — prefilled connect prompt (KEY NAMES ONLY) ──────
+      // Distinct from "Hand off to AI": this onboards a coding agent to THIS
+      // project (project name baked in + the list of key NAMES + how to save more)
+      // WITHOUT ever putting secret values in the chat. Values are handed over
+      // separately, on demand, via "Hand off to AI ↗". Pure client-side string
+      // building — no network, so CSP connect-src 'none' stays intact.
+      const CONNECT_AGENTS = {
+        claude:  { label: 'Claude Code',    who: 'Claude Code',        openNote: '' },
+        codex:   { label: 'ChatGPT Codex',  who: 'ChatGPT Codex',
+                   openNote: '\n   (Running in the Codex Cloud sandbox and can\'t open my browser? Just print the URL and I\'ll open it myself.)' },
+        generic: { label: 'Generic AI',     who: 'my coding agent',    openNote: '' }
+      };
+
+      function buildConnectPrompt(project, agentId) {
+        const agent = CONNECT_AGENTS[agentId] || CONNECT_AGENTS.claude;
+        const name = project.name;
+        const encName = encodeURIComponent(name);
+        const keys = project.keys || [];
+
+        // Aligned "NAME (Type)" list — names only, never values.
+        let keyBlock;
+        if (keys.length) {
+          const maxLen = Math.min(40, keys.reduce((m, k) => Math.max(m, k.name.length), 0));
+          keyBlock = keys.map(k => `  - ${k.name.padEnd(maxLen)}  (${typeLabel(k.type)})`).join('\n');
+        } else {
+          keyBlock = '  (no keys saved yet — I\'ll add some as we go)';
+        }
+
+        return (
+`I'm using KeyVault Sidekick (https://keyvault-sidekick.pages.dev) as my secrets vault, and we're working in my project "${name}". You are ${agent.who}.
+
+KeyVault is a zero-knowledge, local-only vault: no sign-in, and the secret VALUES never leave my browser. So you won't see any values below — only the key NAMES already in this project. Ask me for a specific value when a task actually needs it.
+
+KEYS ALREADY IN "${name}" (names only):
+${keyBlock}
+
+TO SAVE A NEW SECRET to this project:
+1. URL-encode the name, value, type, and notes.
+2. Build this URL (the project is already set to "${name}"):
+   https://keyvault-sidekick.pages.dev/app.html#action=prefill&name=<NAME>&value=<VALUE>&type=<TYPE>&project=${encName}&notes=<NOTES>
+   <TYPE> is one of: api_key, secret, token, oauth, webhook, other (default: api_key).
+3. Open that URL in my default browser:
+     start "" "<URL>"     # Windows
+     open "<URL>"         # macOS
+     xdg-open "<URL>"     # Linux${agent.openNote}
+4. Tell me: "Opening KeyVault — review and click Save key."
+
+TO USE ONE OF THE KEYS ABOVE:
+Ask me for it by name. I'll click "Hand off to AI ↗" in the vault's "${name}" project view, which copies the KEY=value lines (with non-echo guardrails) for me to paste back. Never echo, log, print, or commit secret values.
+
+Acknowledge that you're connected to my "${name}" project and list the key names you can see.`
+        );
+      }
+
+      // The modal: pick the target agent, preview the exact prompt, copy it.
+      function openConnectAIModal(project) {
+        let agentId = 'claude';
+        const agentButtons = Object.entries(CONNECT_AGENTS)
+          .map(([id, a]) => `<button type="button" class="gen-pill${id === agentId ? ' active' : ''}" data-agent="${id}">${escapeHtml(a.label)}</button>`)
+          .join('');
+
+        openModal({
+          title: `Connect AI to "${escapeHtml(project.name)}"`,
+          body: `
+            <p class="modal-help">
+              Copies a ready-to-paste prompt that tells your coding agent it's working in
+              <strong>${escapeHtml(project.name)}</strong> — the key <em>names</em> here plus how to
+              save new keys. <strong>Secret values are never included.</strong> Hand those over with
+              “Hand off to AI&nbsp;↗” only when a task needs them.
+            </p>
+            <div class="field">
+              <label>AI agent</label>
+              <div class="format-pills" id="connect-agent-pills">${agentButtons}</div>
+            </div>
+            <div class="field">
+              <label for="connect-output">Prompt preview — paste this as your first message</label>
+              <textarea class="export-output" id="connect-output" readonly spellcheck="false" rows="14">${escapeHtml(buildConnectPrompt(project, agentId))}</textarea>
+            </div>
+          `,
+          footer: `
+            <button type="button" id="connect-close">Close</button>
+            <button type="button" class="primary" id="connect-copy">Copy prompt</button>
+          `,
+          onMount: (root) => {
+            const output = root.querySelector('#connect-output');
+            const copyBtn = root.querySelector('#connect-copy');
+
+            root.querySelectorAll('#connect-agent-pills .gen-pill').forEach(btn => {
+              btn.addEventListener('click', () => {
+                agentId = btn.dataset.agent;
+                root.querySelectorAll('#connect-agent-pills .gen-pill')
+                  .forEach(b => b.classList.toggle('active', b.dataset.agent === agentId));
+                output.value = buildConnectPrompt(project, agentId);
+              });
+            });
+
+            root.querySelector('#connect-close').addEventListener('click', closeModal);
+
+            copyBtn.addEventListener('click', async () => {
+              try {
+                await copyToClipboard(output.value);   // WYSIWYG: copy exactly what's previewed
+                const old = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copied';
+                showToast(`Connect prompt copied (${CONNECT_AGENTS[agentId].label})`);
+                setTimeout(() => { copyBtn.textContent = old; }, 1800);
+              } catch {
+                showToast('Could not copy', 'err');
+              }
+            });
+          }
+        });
       }
 
       // ── Export screen ─────────────────────────────────────────────────────────
