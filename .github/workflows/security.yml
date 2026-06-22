@@ -1,0 +1,44 @@
+name: Security
+
+# Audit-recommended guardrails (see mcp/TROUBLESHOOTING.md + the security review).
+# This is a zero-runtime-dependency static app, so these gates are mostly about
+# catching a *future* mistake: an accidentally pasted real key, or a newly added
+# unpinned/vulnerable runtime dependency.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # gitleaks-action v2 is free for personal/public repos (an org would need a
+      # GITLEAKS_LICENSE). It scans the commits in the push/PR range and reads
+      # .gitleaks.toml, which allowlists the docs' "sk_live_xxx" placeholders.
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: Dependency audit (npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Gates on vulnerabilities in PRODUCTION deps only (there are zero today, so
+      # this passes — it exists to catch the day a runtime dependency is added).
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high

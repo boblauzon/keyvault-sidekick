@@ -1,0 +1,17 @@
+# gitleaks config for KeyVault Sidekick.
+# Extends the default ruleset and allowlists the documentation placeholders
+# (literal "x" filler keys like sk_live_xxx in the landing page / snippets / docs)
+# so example text never trips CI. A real key has varied characters and will NOT
+# match these patterns, so it is still caught.
+title = "KeyVault Sidekick"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documentation / example placeholders — not real secrets"
+regexes = [
+  '''sk_(live|test)_x{2,}''',
+  '''sk_clerk_x{2,}''',
+  '''pk_live_x{2,}''',
+]
