@@ -26,7 +26,7 @@ jobs:
       # GITLEAKS_LICENSE). It scans the commits in the push/PR range and reads
       # .gitleaks.toml, which allowlists the docs' "sk_live_xxx" placeholders.
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
