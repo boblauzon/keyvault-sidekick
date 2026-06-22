@@ -292,3 +292,66 @@ export async function exportEnv(project, format = 'env') {
   else text = p.keys.map(k => `${k.name}=${shellQuote(k.value)}`).join('\n');
   return { project: p.name, format, keys: p.keys.length, content: text };
 }
+
+// ── Diagnostics + maintenance (for troubleshooting a wrong password etc.) ─────
+
+// Non-throwing health check. Reports whether the CURRENT KEYVAULT_PASSWORD can
+// open the vault, plus project/key counts — NEVER any secret values. Safe to run
+// anytime; this is the first thing to reach for when "it won't connect".
+export async function status() {
+  const out = {
+    vaultPath: VAULT_PATH,
+    passwordSet: !!process.env.KEYVAULT_PASSWORD,
+    exists: existsSync(VAULT_PATH),
+    unlocked: false,
+  };
+  if (!out.exists) {
+    out.note = 'No vault file yet — your first save will CREATE one, encrypted with the current ' +
+               'KEYVAULT_PASSWORD. Double-check that password before the first save, because a typo ' +
+               'would lock the new vault to the typo.';
+    return out;
+  }
+  if (!out.passwordSet) { out.error = 'KEYVAULT_PASSWORD is not set.'; return out; }
+  let blob;
+  try { blob = JSON.parse(readFileSync(VAULT_PATH, 'utf8')); }
+  catch { out.error = 'Vault file is not valid JSON: ' + VAULT_PATH; return out; }
+  try { validateBlob(blob); } catch (e) { out.error = String(e?.message || e); return out; }
+  try {
+    const salt = fromBase64(blob.kdf.salt);
+    const key = await deriveKey(normalizePassword(process.env.KEYVAULT_PASSWORD), salt, blob.kdf.iterations, blob.kdf.hash);
+    const vault = normalizeVault(JSON.parse(await decrypt(blob.cipher, key)));
+    out.unlocked = true;
+    out.projects = vault.projects.length;
+    out.keys = vault.projects.reduce((n, p) => n + p.keys.length, 0);
+    out.kdfIterations = blob.kdf.iterations;
+  } catch (e) {
+    out.error = (e && e.name === 'OperationError')
+      ? 'Incorrect master password — KEYVAULT_PASSWORD does not match this vault.'
+      : 'Vault is corrupt or unreadable: ' + (e?.message || e);
+  }
+  return out;
+}
+
+// Re-encrypt the vault under a NEW master password (fresh salt). Requires the
+// CURRENT KEYVAULT_PASSWORD to open it first, so this both (a) changes the
+// password and (b) fixes a vault accidentally created with a typo'd password:
+// set KEYVAULT_PASSWORD to the typo, pass the password you actually want as the
+// new one. All keys are preserved.
+export async function changePassword(newPassword) {
+  if (!existsSync(VAULT_PATH)) {
+    throw new Error(`No vault exists yet at ${VAULT_PATH} — nothing to re-key (a vault is created on your first save).`);
+  }
+  const newNorm = normalizePassword(newPassword);
+  const c = await ensureLoaded(true); // unlock with the CURRENT password; throws "Incorrect master password" if wrong
+  const salt = randBytes(SALT_LENGTH);
+  CACHE.key = await deriveKey(newNorm, salt, PBKDF2_ITERATIONS, HASH);
+  CACHE.salt = salt;
+  CACHE.iterations = PBKDF2_ITERATIONS;
+  await persist();
+  return {
+    ok: true,
+    vaultPath: VAULT_PATH,
+    projects: c.vault.projects.length,
+    keys: c.vault.projects.reduce((n, p) => n + p.keys.length, 0),
+  };
+}

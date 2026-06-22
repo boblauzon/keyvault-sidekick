@@ -23,9 +23,10 @@
 import {
   VAULT_PATH,
   listProjects, listKeys, getKey, saveKey, generate, generateValue, exportEnv, createProject, deleteKey,
+  status as vaultStatus, changePassword,
 } from './vault-core.mjs';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
@@ -64,6 +65,7 @@ const USAGE = `keyvault v${VERSION} — local KeyVault Sidekick CLI
 Secret values go to STDOUT (pipe them); status/errors go to STDERR.
 
 Commands:
+  status                        Check if your password opens the vault (no secrets)
   list                          List all projects (+ key counts)
   list <project>                List key names in a project (no values)
   get <project> <name>          Print ONE key's value to stdout (for piping)
@@ -74,9 +76,13 @@ Commands:
       --format env|envrc|settings   (default env)
   save <project> <name>         Save a secret; VALUE READ FROM STDIN (secure)
       --type api_key|secret|token|oauth|webhook|other | --notes "..."
+  change-password               Re-key the vault; NEW password from stdin or
+                                KEYVAULT_NEW_PASSWORD (fixes a wrong/typo'd password)
   create-project <name>         Create an empty project  [--description, --color]
   delete <project> <name>       Delete a key (irreversible)
   help | --version
+
+Troubleshooting (wrong password, reinstall, re-key): mcp/TROUBLESHOOTING.md
 
 Secure deploy examples:
   keyvault get Velocity STRIPE_SECRET | wrangler secret put STRIPE_SECRET
@@ -94,6 +100,43 @@ async function main() {
   if (!cmd || cmd === 'help' || flags.help) { status(USAGE); return; }
 
   switch (cmd) {
+    case 'status': {
+      const s = await vaultStatus();
+      status(`vault:     ${s.vaultPath}`);
+      status(`exists:    ${s.exists ? 'yes' : 'no'}`);
+      status(`password:  ${s.passwordSet ? 'set' : 'NOT set'}`);
+      if (s.exists && s.passwordSet) status(`unlocked:  ${s.unlocked ? 'YES' : 'NO'}`);
+      if (s.unlocked) { status(`projects:  ${s.projects}`); status(`keys:      ${s.keys}`); }
+      if (s.note)  status(`\nnote: ${s.note}`);
+      if (s.error) {
+        status(`\nproblem: ${s.error}`);
+        status(`\nHow to fix (see mcp/TROUBLESHOOTING.md for detail):`);
+        status(`  • Right vault but you typed the wrong password into the MCP config?`);
+        status(`    Reinstall with the correct one:`);
+        status(`      claude mcp remove keyvault`);
+        status(`      claude mcp add keyvault --env KEYVAULT_PASSWORD=<correct> -- node <path>/mcp/index.mjs`);
+        status(`  • Want to change the vault's password (or fix a typo you DO remember)?`);
+        status(`      KEYVAULT_PASSWORD=<current> KEYVAULT_NEW_PASSWORD=<new> keyvault change-password`);
+      }
+      if (s.passwordSet && s.exists && !s.unlocked) process.exitCode = 1;
+      return;
+    }
+    case 'change-password': {
+      let newPw = process.env.KEYVAULT_NEW_PASSWORD;
+      if (!newPw) {
+        if (process.stdin.isTTY) {
+          throw new Error('Provide the NEW password via stdin or KEYVAULT_NEW_PASSWORD, e.g.\n' +
+            '  KEYVAULT_NEW_PASSWORD=newpass keyvault change-password\n' +
+            '  printf %s "newpass" | keyvault change-password');
+        }
+        newPw = await readStdin();
+      }
+      const r = await changePassword(newPw);
+      status(`Re-keyed ${r.vaultPath} — ${r.projects} project(s), ${r.keys} key(s) preserved.`);
+      status(`IMPORTANT: update KEYVAULT_PASSWORD to the NEW password everywhere you use it`);
+      status(`(your MCP config + any shell env), or the next unlock will fail.`);
+      return;
+    }
     case 'list': {
       if (positionals[1]) {
         const r = await listKeys(positionals[1]);

@@ -2857,7 +2857,7 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
       function buildMcpKickoff(project) {
         const name = project.name;
         return (
-`You have the KeyVault Sidekick MCP server installed. Tools: keyvault_list_projects, keyvault_list_keys, keyvault_get_key, keyvault_save_key, keyvault_generate, keyvault_export_env, keyvault_create_project, keyvault_delete_key.
+`You have the KeyVault Sidekick MCP server installed. Tools: keyvault_status, keyvault_list_projects, keyvault_list_keys, keyvault_get_key, keyvault_save_key, keyvault_generate, keyvault_export_env, keyvault_create_project, keyvault_delete_key.
 
 We're working in my KeyVault project "${name}". Manage its secrets directly and hands-free — don't ask me to click anything:
 - Generate new secrets with keyvault_generate (set save=true, project="${name}", name=...).
@@ -2866,7 +2866,7 @@ We're working in my KeyVault project "${name}". Manage its secrets directly and 
 Only read a value with keyvault_get_key when a task actually needs it. When deploying a secret, prefer the keyvault CLI so the value stays out of this chat:
   keyvault get "${name}" KEY_NAME | your-deploy-command
 
-Confirm you're connected by listing the keys currently in "${name}".`
+First, confirm the connection by calling keyvault_status and telling me what it reports. If it can't unlock the vault (wrong password), tell me — I'll fix KEYVAULT_PASSWORD using the steps in the repo's mcp/TROUBLESHOOTING.md. Otherwise, list the keys currently in "${name}".`
         );
       }
 

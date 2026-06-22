@@ -70,7 +70,8 @@ openssl rand -hex 16 | keyvault save Velocity WEBHOOK_KEY
 ```
 
 Secret **values → stdout**; status/errors → stderr, so a piped value is always
-exact (no trailing newline). Run `keyvault help` for the full command list.
+exact (no trailing newline). Run `keyvault help` for the full command list, or
+`keyvault status` to check that your password opens the vault.
 
 **Getting `keyvault` on your PATH:** from the repo, `cd mcp && npm link` (or
 `npm install -g .`). Without that, invoke it as
@@ -174,9 +175,14 @@ env = { KEYVAULT_PASSWORD = "your-master-password" }
 | `keyvault_export_env` | Whole project as `.env` / `.envrc` / `settings` JSON, shell-quoted | yes (the block) |
 | `keyvault_create_project` | Create an empty project | no |
 | `keyvault_delete_key` | Delete a key (irreversible) | no |
+| `keyvault_status` | Health check: can the password open the vault? + counts | **no** |
 
 `keyvault_list_keys` deliberately omits values — the agent must call
 `keyvault_get_key` for a specific secret, so values aren't dumped wholesale.
+
+If a tool ever errors with a password problem, ask the agent to **run
+`keyvault_status`** (or run `keyvault status` in a terminal) — it reports whether
+your password opens the vault, with no secrets, and points you at the fix.
 
 ---
 
@@ -194,6 +200,31 @@ them with the existing import/export:
 (Real-time two-way sync isn't built — they're two stores sharing one format. Pick
 the file-based MCP vault as your source of truth if the agent is doing most of the
 managing.)
+
+---
+
+## Troubleshooting
+
+**Set up with the wrong password? Tools failing? → [TROUBLESHOOTING.md](TROUBLESHOOTING.md).**
+
+The fast path:
+
+```sh
+keyvault status      # does my password open the vault? (no secrets printed)
+```
+
+Quick fixes:
+
+| Problem | Fix |
+|---|---|
+| Typed the wrong password into the config | `claude mcp remove keyvault` → `claude mcp add … --env KEYVAULT_PASSWORD=<correct> …`, then restart |
+| Change / re-key the vault password | `KEYVAULT_PASSWORD=<cur> KEYVAULT_NEW_PASSWORD=<new> keyvault change-password` |
+| Vault got created with a typo'd password | Re-key it (if you know the typo) or delete `~/.keyvault-sidekick/vault.json` and start fresh |
+| Want to use your browser keys | Export `.vault` from the app → add `--env KEYVAULT_VAULT_PATH=…` |
+| Agent doesn't see the tools | Restart the agent; `claude mcp list`; check `node --version` ≥ 18 |
+
+Full walkthrough — including reinstall, the "right vault vs. wrong vault" distinction,
+and per-client config locations — is in **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**.
 
 ---
 

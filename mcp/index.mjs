@@ -27,7 +27,7 @@
 import { createInterface } from 'node:readline';
 import {
   VALID_TYPES, VAULT_PATH,
-  listProjects, listKeys, getKey, saveKey, generate, exportEnv, createProject, deleteKey,
+  listProjects, listKeys, getKey, saveKey, generate, exportEnv, createProject, deleteKey, status,
 } from './vault-core.mjs';
 
 const SERVER_INFO = { name: 'keyvault-sidekick', version: '0.2.0' };
@@ -43,6 +43,7 @@ const TOOL_DEFS = [
   { name: 'keyvault_export_env', description: 'Export all keys in a project as a ready-to-paste block: .env (KEY="value"), .envrc (export KEY=...), or settings (Claude Code env JSON). Values are POSIX shell-quoted.', inputSchema: { type: 'object', required: ['project'], properties: { project: { type: 'string' }, format: { type: 'string', enum: ['env', 'envrc', 'settings'], description: 'Default env.' } } } },
   { name: 'keyvault_create_project', description: 'Create an empty project. Usually unnecessary — keyvault_save_key auto-creates projects — but available for organizing ahead of time.', inputSchema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, description: { type: 'string' }, color: { type: 'string' } } } },
   { name: 'keyvault_delete_key', description: 'Permanently delete a key from a project. Irreversible.', inputSchema: { type: 'object', required: ['project', 'name'], properties: { project: { type: 'string' }, name: { type: 'string' } } } },
+  { name: 'keyvault_status', description: 'Health check: reports whether the configured KEYVAULT_PASSWORD can open the local vault (the vault path, whether it exists, whether it unlocks, and project/key counts). Returns NO secret values. Call this first if any other tool fails with a password error, and tell the user the result so they can fix their config.', inputSchema: { type: 'object', properties: {} } },
 ];
 
 async function runTool(name, args) {
@@ -55,6 +56,7 @@ async function runTool(name, args) {
     case 'keyvault_export_env':    return exportEnv(args.project, args.format);
     case 'keyvault_create_project':return createProject(args);
     case 'keyvault_delete_key':    return deleteKey(args.project, args.name);
+    case 'keyvault_status':        return status();
     default: throw new Error(`Unknown tool: ${name}`);
   }
 }
