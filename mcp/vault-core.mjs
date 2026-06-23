@@ -11,7 +11,7 @@
  */
 
 import { webcrypto as wc } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync, renameSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync, renameSync, unlinkSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -212,12 +212,23 @@ export const Generators = {
 const GEN_DEFAULT_TYPE = { jwt: 'secret', uuid: 'token', hex: 'secret', base64: 'token', apiKey: 'api_key', api_key: 'api_key', password: 'secret' };
 
 // ── Vault store (lazy load + in-memory cache; one decrypt per process) ───────
-let CACHE = null; // { vault, key, salt:Uint8Array, iterations }
+let CACHE = null; // { vault, key, salt:Uint8Array, iterations, mtimeMs }
+
+// Cheap change-detector: the vault file's modification time. Used to invalidate
+// CACHE when the file is written OUT-OF-BAND (a `keyvault` CLI invocation, another
+// agent, the browser import) so a subsequent write here reloads the current state
+// instead of clobbering that change with a stale in-memory copy.
+function fileMtimeMs() {
+  try { return statSync(VAULT_PATH).mtimeMs; } catch { return null; }
+}
 
 async function ensureLoaded(forWrite) {
   if (forWrite && isReadOnly()) {
     throw new Error('Vault is read-only (KEYVAULT_READONLY is set) — writes are blocked. Unset KEYVAULT_READONLY to allow changes.');
   }
+  // Drop the cache if the file changed since we loaded it (out-of-band write),
+  // so we reload the current state instead of clobbering it on the next write.
+  if (CACHE && CACHE.mtimeMs != null && fileMtimeMs() !== CACHE.mtimeMs) CACHE = null;
   if (CACHE) return CACHE;
   const password = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE');
   if (!password) throw new Error(noPasswordError());
@@ -238,7 +249,7 @@ async function ensureLoaded(forWrite) {
       if (e && e.name === 'OperationError') throw new Error('Incorrect master password — KEYVAULT_PASSWORD does not match this vault.');
       throw new Error('Vault is corrupt or unreadable: ' + (e?.message || e));
     }
-    CACHE = { vault: normalizeVault(vault), key, salt, iterations };
+    CACHE = { vault: normalizeVault(vault), key, salt, iterations, mtimeMs: fileMtimeMs() };
     return CACHE;
   }
   if (!forWrite) {
@@ -246,7 +257,7 @@ async function ensureLoaded(forWrite) {
   }
   const salt = randBytes(SALT_LENGTH);
   const key = await deriveKey(norm, salt, PBKDF2_ITERATIONS, HASH);
-  CACHE = { vault: { version: 1, projects: [] }, key, salt, iterations: PBKDF2_ITERATIONS };
+  CACHE = { vault: { version: 1, projects: [] }, key, salt, iterations: PBKDF2_ITERATIONS, mtimeMs: null };
   return CACHE;
 }
 
@@ -275,6 +286,7 @@ async function persist() {
     throw e;
   }
   try { chmodSync(VAULT_PATH, 0o600); } catch { /* non-POSIX */ }
+  if (CACHE) CACHE.mtimeMs = fileMtimeMs(); // our own write — keep the cache valid
 }
 
 function findProject(vault, ref) {

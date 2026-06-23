@@ -26,7 +26,7 @@ import {
   status as vaultStatus, changePassword, resolveSecret, stripTrailingNewlines,
 } from './vault-core.mjs';
 
-const VERSION = '0.3.4';
+const VERSION = '0.3.5';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
