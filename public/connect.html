@@ -534,7 +534,23 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
           <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="mcp-claude">Copy</button>
         </div>
 
-        <p class="install-helper" style="margin-top: 4px;">
+        <div class="how-it-works" style="margin: 14px 0 0 0;">
+          <h3>Harden it (optional)</h3>
+          <p>
+            <strong>Keep the password out of the config</strong> — point at a
+            <code>0600</code> file instead of inlining it:<br>
+            <code>--env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password</code>
+          </p>
+          <p style="margin-top: 10px;">
+            <strong>Least privilege</strong> — add <code>--env KEYVAULT_READONLY=1</code>
+            and the agent can read, list, and export keys but <strong>cannot change
+            or delete</strong> anything. Without it, installing the MCP is like handing
+            the agent your unlocked vault — it can write and delete every key. (Prefer
+            values never touching the chat? Use the <code>keyvault</code> CLI below.)
+          </p>
+        </div>
+
+        <p class="install-helper" style="margin-top: 14px;">
           <strong>Claude Desktop, Cursor, Codex CLI</strong> and the full tool list,
           security model, and browser&nbsp;↔&nbsp;MCP bridge are in the
           <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/README.md" target="_blank" rel="noopener">MCP setup guide ↗</a>.

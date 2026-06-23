@@ -1,6 +1,6 @@
 {
   "name": "keyvault-sidekick",
-  "version": "3.5.3",
+  "version": "3.5.4",
   "description": "Browser-only AES-256-GCM encrypted secrets vault for vibe coders. Free, open, local-first — zero backend, no accounts. One-click handoff to Claude Code & ChatGPT Codex.",
   "private": true,
   "type": "module",
