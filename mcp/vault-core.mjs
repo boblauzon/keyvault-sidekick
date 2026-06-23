@@ -11,7 +11,7 @@
  */
 
 import { webcrypto as wc } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync, renameSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -72,6 +72,15 @@ function noPasswordError() {
     return `KEYVAULT_PASSWORD_FILE (${f}) is set but resolved to an empty password — put your master password in that file.`;
   }
   return 'No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.';
+}
+
+// Opt-in least-privilege. With KEYVAULT_READONLY set, every MUTATING operation
+// (save / delete / create / generate-with-save / change-password) is blocked, so
+// a misbehaving or prompt-injected agent can READ keys but cannot alter or
+// destroy the vault. Reads (list/get/export/status) are unaffected.
+export function isReadOnly() {
+  const v = process.env.KEYVAULT_READONLY;
+  return !!v && !['', '0', 'false', 'no', 'off'].includes(String(v).toLowerCase());
 }
 
 // ── Encoding (standard base64, matching btoa/atob) ───────────────────────────
@@ -186,6 +195,9 @@ const GEN_DEFAULT_TYPE = { jwt: 'secret', uuid: 'token', hex: 'secret', base64: 
 let CACHE = null; // { vault, key, salt:Uint8Array, iterations }
 
 async function ensureLoaded(forWrite) {
+  if (forWrite && isReadOnly()) {
+    throw new Error('Vault is read-only (KEYVAULT_READONLY is set) — writes are blocked. Unset KEYVAULT_READONLY to allow changes.');
+  }
   if (CACHE) return CACHE;
   const password = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE');
   if (!password) throw new Error(noPasswordError());
@@ -226,8 +238,21 @@ async function persist() {
     cipher: { algorithm: ALGORITHM, iv, ciphertext },
     updatedAt: nowISO(),
   };
-  mkdirSync(dirname(VAULT_PATH), { recursive: true });
-  writeFileSync(VAULT_PATH, JSON.stringify(blob), { mode: 0o600 });
+  const dir = dirname(VAULT_PATH);
+  mkdirSync(dir, { recursive: true });
+  // Atomic write: write a sibling temp file (0600), then rename it over the
+  // target. rename is atomic on POSIX and replace-on-Windows (Node uses
+  // MoveFileEx), so a crash / power-loss mid-write can never truncate the
+  // irreplaceable, no-recovery vault. Temp is cleaned up on failure.
+  const tmp = join(dir, `.vault-${wc.randomUUID()}.tmp`);
+  try {
+    writeFileSync(tmp, JSON.stringify(blob), { mode: 0o600 });
+    try { chmodSync(tmp, 0o600); } catch { /* non-POSIX */ }
+    renameSync(tmp, VAULT_PATH);
+  } catch (e) {
+    try { unlinkSync(tmp); } catch { /* temp may already be gone */ }
+    throw e;
+  }
   try { chmodSync(VAULT_PATH, 0o600); } catch { /* non-POSIX */ }
 }
 
@@ -348,6 +373,7 @@ export async function status() {
   catch (e) { resolveErr = String(e?.message || e); }
   const out = {
     vaultPath: VAULT_PATH,
+    readOnly: isReadOnly(),
     passwordConfigured: passwordConfigured(),
     passwordSet: !!pw,
     exists: existsSync(VAULT_PATH),

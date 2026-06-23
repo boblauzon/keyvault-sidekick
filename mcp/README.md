@@ -96,6 +96,7 @@ Two environment variables:
 | `KEYVAULT_PASSWORD` | yes* | — | Your master password. Used only to derive the AES key; never written anywhere. |
 | `KEYVAULT_PASSWORD_FILE` | yes* | — | Alternative to the above: a path to a `0600` file holding the master password (read at startup; trailing newlines stripped). Keeps the password **out of your agent config**. The direct env var wins if both are set. |
 | `KEYVAULT_VAULT_PATH` | no | `~/.keyvault-sidekick/vault.json` | Where the encrypted vault file lives. Point it at a `.vault` exported from the web app to share one store. |
+| `KEYVAULT_READONLY` | no | _(off)_ | Set to `1`/`true` for **least privilege**: the agent can read/list/export keys but every write (save, delete, create, generate-with-save, change-password) is blocked. Defense against a misbehaving or prompt-injected agent altering or destroying the vault. |
 
 \* Provide **one** of `KEYVAULT_PASSWORD` or `KEYVAULT_PASSWORD_FILE`. The file
 form is more secure — see [Security notes](#security-notes).
@@ -235,7 +236,15 @@ and per-client config locations — is in **[TROUBLESHOOTING.md](TROUBLESHOOTING
 ## Security notes
 
 - **Secrets never leave your machine.** No network calls, ever.
-- **The vault file is written `0600`** (owner read/write only) on POSIX systems.
+- **The vault file is written `0600`** (owner read/write only) on POSIX systems,
+  and written **atomically** (temp file + rename) so a crash mid-write can't
+  truncate your irreplaceable vault.
+- **The agent gets full vault access by design.** Installing the server lets the
+  agent read, write, and delete every key — that's the "full automation" trade.
+  If you only want the agent to *use* existing keys (not manage them), set
+  **`KEYVAULT_READONLY=1`** (writes blocked), or skip the MCP and use the browser
+  prefill bridge + `keyvault` CLI instead. Treat the MCP like handing the agent
+  your unlocked vault.
 - **Keep the master password out of your agent config.** A non-interactive server
   needs the password without prompting, but you don't have to inline it. Prefer
   **`KEYVAULT_PASSWORD_FILE`** pointed at a locked-down file:

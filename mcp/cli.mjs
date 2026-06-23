@@ -26,7 +26,7 @@ import {
   status as vaultStatus, changePassword, resolveSecret, stripTrailingNewlines,
 } from './vault-core.mjs';
 
-const VERSION = '0.3.2';
+const VERSION = '0.3.3';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
@@ -108,6 +108,7 @@ async function main() {
       const s = await vaultStatus();
       const pwState = s.passwordSet ? 'set' : (s.passwordConfigured ? 'configured but unusable (empty/unreadable)' : 'NOT set');
       status(`vault:     ${s.vaultPath}`);
+      if (s.readOnly) status(`mode:      READ-ONLY (writes blocked)`);
       status(`exists:    ${s.exists ? 'yes' : 'no'}`);
       status(`password:  ${pwState}`);
       if (s.exists && s.passwordSet) status(`unlocked:  ${s.unlocked ? 'YES' : 'NO'}`);
