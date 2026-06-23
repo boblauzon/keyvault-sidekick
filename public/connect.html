@@ -213,15 +213,26 @@
         </p>
       </div>
 
+      <div class="how-it-works" style="background: linear-gradient(135deg, rgba(45,212,191,0.05), rgba(6,182,212,0.05)); border-color: rgba(45,212,191,0.25);">
+        <h3>Not sure which one to pick?</h3>
+        <p>
+          <strong>Just trying it out?</strong> → Option 3 (paste a prompt, nothing to install).<br>
+          <strong>Claude Code, for keeps?</strong> → Option 1. &nbsp;<strong>ChatGPT Codex?</strong> → Option 2.<br>
+          <strong>Want the agent to create &amp; save keys on its own?</strong> → Option 5 (the MCP server).
+        </p>
+      </div>
+
       <div class="how-it-works">
         <h3>What happens when you paste the command</h3>
         <p>
-          Each install command does just two things: <strong>(1)</strong> downloads
-          a plain-text instruction snippet from
+          Each install command (Options 1, 2 and 4) does just two things:
+          <strong>(1)</strong> downloads a plain-text instruction snippet from
           <code>keyvault-sidekick.pages.dev/snippets/...</code>, and
-          <strong>(2)</strong> writes it to a file Claude Code reads. <strong>The
-          fetched content is data, never executed.</strong> You can inspect it any
-          time by visiting the URL or running <code>irm URL</code> alone.
+          <strong>(2)</strong> writes it to a file your coding agent reads (Claude Code's
+          <code>CLAUDE.md</code>, Codex's <code>AGENTS.md</code>). <strong>The fetched content
+          is data, never executed.</strong> To see exactly what will be added <em>before</em>
+          you run it, paste just the <code>irm URL</code> (or <code>curl URL</code>) part on its
+          own — it prints the text without changing anything.
         </p>
       </div>
 
@@ -513,7 +524,10 @@
           KeyVault project ITIL"</em> just happens. Works with
           <strong>Claude Code, Claude Desktop, Cursor, and Codex CLI</strong>.
           Secrets stay on your machine — the server runs locally over a local
-          encrypted vault file (same AES-256-GCM format as this app).
+          encrypted vault file (same AES-256-GCM format as this app). Note: when the agent
+          <em>reads</em> a key through the MCP, that value appears in the chat (that's how it uses
+          it). To deploy a secret <strong>without</strong> it ever showing in the chat, use the
+          <code>keyvault</code> CLI further down.
         </p>
 
         <div class="how-it-works" style="margin: 0 0 18px 0;">
@@ -526,8 +540,10 @@
         </div>
 
         <div class="install-helper">
-          <strong>Claude Code</strong> — clone the repo, then add the server (sets your
-          master password as an env var the agent never sees):
+          <strong>Claude Code</strong> — run this from the folder where you cloned the repo. It passes
+          your master password to the server as an environment variable, so it isn't part of the AI's
+          chat. Heads-up: with this inline form, the password is stored in plain text in Claude Code's
+          config file — see <strong>Harden it</strong> below to keep it out of the config.
         </div>
         <div class="code-mini with-copy" data-cmd="mcp-claude">git clone https://github.com/boblauzon/keyvault-sidekick
 claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs
@@ -537,9 +553,12 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
         <div class="how-it-works" style="margin: 14px 0 0 0;">
           <h3>Harden it (optional)</h3>
           <p>
-            <strong>Keep the password out of the config</strong> — point at a
-            <code>0600</code> file instead of inlining it:<br>
-            <code>--env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password</code>
+            <strong>Keep the password out of the config</strong> — point at a file only your user
+            account can read, instead of inlining it:<br>
+            <code>--env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password</code><br>
+            <span style="color:var(--text-mute)">Create that file (macOS/Linux):
+            <code>umask 177 &amp;&amp; printf %s 'your-master-password' &gt; ~/.keyvault-sidekick/password</code>.
+            On Windows, save it somewhere only your account can read.</span>
           </p>
           <p style="margin-top: 10px;">
             <strong>Least privilege</strong> — add <code>--env KEYVAULT_READONLY=1</code>
@@ -556,8 +575,9 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
           <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/README.md" target="_blank" rel="noopener">MCP setup guide ↗</a>.
         </p>
         <p class="install-helper" style="margin-top: 4px;">
-          <strong>Set up with the wrong password, or won't connect?</strong> Run
-          <code>keyvault status</code> to check (no secrets shown), then see the
+          <strong>Set up with the wrong password, or won't connect?</strong> In your agent, just say
+          <em>“run keyvault_status”</em> — it checks whether your password opens the vault (no secrets
+          shown). Then see the
           <a href="https://github.com/boblauzon/keyvault-sidekick/blob/master/mcp/TROUBLESHOOTING.md" target="_blank" rel="noopener">troubleshooting guide ↗</a>
           — fix a typo'd password, re-key the vault, or reinstall.
         </p>
@@ -567,9 +587,14 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
           <p>
             The same package ships a <code>keyvault</code> CLI that writes values to
             <strong>stdout only</strong> — so they pipe straight to their destination
-            and <strong>never enter the AI's chat/transcript</strong>:
+            and <strong>never enter the AI's chat/transcript</strong>.
           </p>
           <p style="margin-top: 8px;">
+            One-time setup — put the CLI on your PATH and give it your password (once per terminal):<br>
+            <code>cd keyvault-sidekick/mcp &amp;&amp; npm link</code><br>
+            <code>export KEYVAULT_PASSWORD=your-master-password</code>
+          </p>
+          <p style="margin-top: 8px;">Then pipe a value straight to its destination:<br>
             <code>keyvault get Velocity STRIPE_SECRET | wrangler secret put STRIPE_SECRET</code><br>
             <code>keyvault export-env Velocity &gt; .dev.vars</code>
           </p>
@@ -605,7 +630,7 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
         <strong>About the one-line installer's safety:</strong>
         <ul>
           <li><code>irm URL | Add-Content</code> and <code>curl URL >> file</code> only <strong>write</strong> the response to a file — they never <strong>execute</strong> it. This is data, not a remote script.</li>
-          <li>The URLs point to <code>keyvault-sidekick.pages.dev/snippets/...</code>, the same origin that serves your vault. If you trust this site enough to store your secrets here, fetching plain-text instructions from it is the same trust level.</li>
+          <li>The URLs point to <code>keyvault-sidekick.pages.dev/snippets/...</code>, the same origin that serves the vault app itself. If you trust this site to run your vault, fetching plain-text instructions from it is the same trust level. (Your secrets are never stored on the server — they stay encrypted in your browser.)</li>
           <li>You can preview the exact text before running: <code>irm https://keyvault-sidekick.pages.dev/snippets/claude-md.txt</code></li>
           <li>The snippets contain no secrets, no keys, and no executable code — only instructions for Claude.</li>
           <li>Running the install twice will duplicate the entry. <code>Add-Content</code> appends; <code>Set-Content</code> overwrites. Adjust if you re-run.</li>

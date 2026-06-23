@@ -184,7 +184,8 @@
           <ol>
             <li>Go to <strong>keyvault-sidekick.pages.dev</strong> and click <span class="ui">Open vault</span>.</li>
             <li>The first time, you'll see <strong>Create your vault</strong>. Type your master
-              password twice, then click <span class="ui">Create vault</span>.</li>
+              password twice (<strong>at least 8 characters</strong> — a long passphrase is best), then
+              click <span class="ui">Create vault</span>.</li>
             <li>That's it — you're in. Next time you visit, you'll just type the same password to
               <span class="ui">Unlock</span>.</li>
           </ol>
@@ -267,8 +268,8 @@
             <div class="mode-title">🤖 Full automation <span class="tag">· hands-free, for more technical users</span></div>
             <p style="margin:0 0 8px 0;color:var(--text-dim);font-size:14px;line-height:1.7">
               This installs a small local helper (an <strong>MCP server</strong>) so your AI can create,
-              save, read, and manage keys <em>by itself</em> — no clicking. The modal gives you a one-line
-              install command and a ready-to-paste kickoff message. It works with local AI tools
+              save, read, and manage keys <em>by itself</em> — no clicking. The modal gives you a copy-paste
+              install command (clone the repo, then register the server) and a ready-to-paste kickoff message. It works with local AI tools
               (Claude&nbsp;Code, Claude&nbsp;Desktop, Cursor, Codex&nbsp;CLI).
             </p>
             <p style="margin:0 0 8px 0;color:var(--text-dim);font-size:14px;line-height:1.7">
@@ -298,9 +299,9 @@
           <h2>Back up your vault &amp; stay safe</h2>
           <p>Because there's no password recovery, a backup is your safety net:</p>
           <ol>
-            <li>Click the <span class="ui">⚙ Settings</span> gear → <span class="ui">Export .vault</span>.
-              This saves an <strong>encrypted</strong> backup file. Keep it somewhere safe — it still needs
-              your master password to open.</li>
+            <li>Click the <span class="ui">⚙ Settings</span> gear to open Settings, then
+              <span class="ui">Export .vault</span>. This saves an <strong>encrypted</strong> backup file.
+              Keep it somewhere safe — it still needs your master password to open.</li>
             <li>To move your vault to another device, copy that file there and use
               <span class="ui">Import .vault</span>.</li>
           </ol>

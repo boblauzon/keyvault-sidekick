@@ -1804,7 +1804,7 @@
           `;
         }
         if (tabId === 'uuid') {
-          return `<p class="gen-help">UUID v4 (RFC 4122) from the Web Crypto API. 128 bits of randomness.</p>`;
+          return `<p class="gen-help">UUID v4 (RFC 4122) from the Web Crypto API. 122 bits of randomness.</p>`;
         }
         if (tabId === 'hex') {
           return `
@@ -2268,7 +2268,7 @@
         openModal({
           title: 'Import .env file',
           body: `
-            <p class="modal-help">Paste a .env file. Each KEY=VALUE pair is added as an "Other" key in this project. Duplicate names are overwritten in the preview; existing keys in the project are not modified — duplicates create new entries with a numeric suffix.</p>
+            <p class="modal-help">Paste a .env file. Each KEY=VALUE becomes an "Other" key in this project. If the same name appears twice in your pasted text, the last value wins. If a name already exists in this project, the new one is added as NAME_2 — your existing key is left untouched.</p>
             <div class="field">
               <label for="env-input">Paste content</label>
               <textarea id="env-input" rows="8" autocomplete="off" placeholder="DATABASE_URL=postgres://...\nAPI_KEY=&quot;sk_live_...&quot;\nexport DEBUG=false"></textarea>
@@ -3201,7 +3201,7 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                       <strong>Claude navigates your browser to the vault URL.</strong><br>
                       The key value is embedded in the URL fragment (the <code>#...</code> part),
                       which is never transmitted to the server:
-                      <div class="guide-code"><span class="kw">http://localhost:8091/</span>#action=prefill
+                      <div class="guide-code"><span class="kw">https://keyvault-sidekick.pages.dev/app.html</span>#action=prefill
   &amp;name=STRIPE_RESTRICTED_KEY
   &amp;value=rk_live_51abc…
   &amp;type=api_key
@@ -3222,7 +3222,7 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                     <div class="guide-step-num">4</div>
                     <div class="guide-step-body">
                       <strong>Unlock the vault</strong> (if locked) with your master password.<br>
-                      The <strong>⚡ Save key from Claude</strong> modal opens automatically
+                      The <strong>Save key from Claude</strong> modal opens automatically
                       with all fields pre-filled. If the vault was already unlocked, the modal
                       opens immediately.
                     </div>
@@ -3337,14 +3337,15 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                   <div class="sec-prop">
                     <div class="sec-prop-icon">🚫</div>
                     <div class="sec-prop-body">
-                      <div class="sec-prop-title">No outbound network requests — ever</div>
+                      <div class="sec-prop-title">No automatic network requests</div>
                       <div class="sec-prop-detail">
-                        The Content Security Policy enforces <code>connect-src 'none'</code>,
-                        which means the page cannot make any HTTP requests, WebSocket
-                        connections, or fetch calls — even to the same origin. There are
-                        no analytics, no error reporting, no fonts loaded from CDNs,
-                        no external scripts. The app works fully offline after the first
-                        page load.
+                        The Content Security Policy sets <code>connect-src 'none'</code>, so the
+                        vault cannot fetch, send data, or open a WebSocket — even to the same
+                        origin. No analytics, no error reporting, no telemetry, no fonts or
+                        scripts from a CDN. The <strong>☕ Support</strong> and
+                        <strong>⚡ Connect</strong> links open external pages in a new tab only
+                        when you click them; the vault screen itself never phones home. It works
+                        fully offline.
                       </div>
                     </div>
                   </div>
@@ -3378,14 +3379,13 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                   <div class="sec-prop">
                     <div class="sec-prop-icon">⏩</div>
                     <div class="sec-prop-body">
-                      <div class="sec-prop-title">Forward-compatible KDF</div>
+                      <div class="sec-prop-title">Future-proof encryption settings</div>
                       <div class="sec-prop-detail">
-                        The PBKDF2 parameters (iterations, hash algorithm, salt) are
-                        stored inside the encrypted blob and read back at unlock time —
-                        they are not hardcoded in the app. This means a future
-                        iteration-count increase will not silently break vaults created
-                        with the current parameters. Old vaults will still unlock
-                        correctly; new vaults will use the updated parameters.
+                        Each vault remembers the exact encryption settings (PBKDF2 iterations,
+                        hash, salt) it was created with — they're stored inside the encrypted
+                        file, not hardcoded in the app. So if the encryption is strengthened in a
+                        future version, your existing vault still unlocks normally; only new
+                        vaults use the stronger settings.
                       </div>
                     </div>
                   </div>
@@ -3394,8 +3394,8 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                     <div class="sec-prop-body">
                       <div class="sec-prop-title">Single-file, auditable source</div>
                       <div class="sec-prop-detail">
-                        The entire application is one <code>index.html</code> file (~2300 lines).
-                        No minification, no obfuscation, no build step, no bundled
+                        The entire vault is one self-contained <code>app.html</code> file —
+                        no minification, no obfuscation, no build step, no bundled
                         dependencies. You can read the full source with browser View Source
                         right now. The source is also on GitHub at
                         <strong>github.com/boblauzon/keyvault-sidekick</strong>.
@@ -3426,7 +3426,7 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                   The hosted version at <code>keyvault-sidekick.pages.dev</code> is served by
                   Cloudflare Pages. The single risk this hosting model carries is
                   <strong>supply-chain compromise</strong>: if our Cloudflare account were
-                  ever taken over, an attacker could push a modified <code>index.html</code>
+                  ever taken over, an attacker could push a modified <code>app.html</code>
                   that exfiltrates your vault after you unlock. Here's how to detect that —
                   and, if you want zero CDN trust, how to run KeyVault Sidekick from your own
                   machine instead.
@@ -3460,12 +3460,12 @@ First, confirm the connection by calling keyvault_status and telling me what it 
                   serialization) and compare with the file hash in the GitHub release:
                 </p>
 
-                <div class="guide-code"><span class="cm"># 1. Fetch raw HTML directly</span>
-curl -o keyvault.html https://keyvault-sidekick.pages.dev/
+                <div class="guide-code"><span class="cm"># 1. Fetch the raw vault file directly</span>
+curl -o app.html https://keyvault-sidekick.pages.dev/app.html
 
 <span class="cm"># 2. Hash it</span>
-certutil -hashfile keyvault.html SHA256     <span class="cm"># Windows</span>
-shasum -a 256 keyvault.html                 <span class="cm"># macOS / Linux</span>
+certutil -hashfile app.html SHA256     <span class="cm"># Windows</span>
+shasum -a 256 app.html                 <span class="cm"># macOS / Linux</span>
 
 <span class="cm"># 3. Compare with the "File hash (raw source)" in the release notes:</span>
 <span class="cm">#    https://github.com/boblauzon/keyvault-sidekick/releases</span></div>

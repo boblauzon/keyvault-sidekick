@@ -7,7 +7,7 @@
        connect-src 'none' is therefore enforceable here. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'; worker-src 'none'; child-src 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Browser-only AES-256-GCM encrypted secrets vault for solo vibe coders. Zero backend, zero sign-up. Keys never leave the device.">
+  <meta name="description" content="Browser-only AES-256-GCM encrypted secrets vault for solo vibe coders. No backend, no sign-up. Keys stay encrypted in your browser and are never sent to a server.">
   <meta name="referrer" content="no-referrer">
   <title>KeyVault Sidekick · By VibeProSoft</title>
   <link rel="stylesheet" href="/shared.css">
@@ -185,11 +185,12 @@
 
     <section class="hero">
       <div>
-        <span class="pill"><span class="pulse-dot"></span> Free &amp; open · Local-first · v3.5</span>
+        <span class="pill"><span class="pulse-dot"></span> Free &amp; open · Runs in your browser · v3.5</span>
         <h1>Your API keys,<br><span class="gradient-text">encrypted locally</span>.</h1>
         <p class="lede">
-          Browser-only encrypted secrets vault for solo developers. Zero backend, zero sign-up,
-          zero breach surface. Keys never leave your device.
+          Browser-only encrypted secrets vault for solo developers. No backend, no sign-up,
+          no servers to breach. Your keys stay encrypted in your browser and never leave your
+          device unless you choose to export them.
         </p>
         <div class="hero-cta">
           <a href="/app.html" class="btn primary large">Open Vault
@@ -256,8 +257,8 @@
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
-            <h3>Military-grade encryption</h3>
-            <p>AES-256-GCM with PBKDF2 key derivation. Your master password never leaves the browser.</p>
+            <h3>Strong, standard encryption</h3>
+            <p>AES-256-GCM with PBKDF2 key derivation (310,000 rounds). Your master password never leaves the browser.</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
