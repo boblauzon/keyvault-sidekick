@@ -540,15 +540,25 @@
         </div>
 
         <div class="install-helper">
-          <strong>Claude Code</strong> — run this from the folder where you cloned the repo. It passes
-          your master password to the server as an environment variable, so it isn't part of the AI's
-          chat. Heads-up: with this inline form, the password is stored in plain text in Claude Code's
-          config file — see <strong>Harden it</strong> below to keep it out of the config.
+          <strong>Claude Code — two separate steps.</strong> First get the code:
         </div>
-        <div class="code-mini with-copy" data-cmd="mcp-claude">git clone https://github.com/boblauzon/keyvault-sidekick
-claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs
-          <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="mcp-claude">Copy</button>
+        <div class="code-mini with-copy" data-cmd="mcp-clone">git clone https://github.com/boblauzon/keyvault-sidekick
+          <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="mcp-clone">Copy</button>
         </div>
+        <div class="install-helper" style="margin-top: 12px;">
+          Then register the server. <strong>Replace <code>PUT-YOUR-PASSWORD-HERE</code> with your real
+          KeyVault master password</strong> — that exact placeholder is rejected, so it can't be run
+          as-is. <code>--scope user</code> registers it globally, so it works from every folder (not
+          just this one):
+        </div>
+        <div class="code-mini with-copy" data-cmd="mcp-add">claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD=PUT-YOUR-PASSWORD-HERE -- node ./keyvault-sidekick/mcp/index.mjs
+          <button type="button" class="primary code-mini-copy install-copy" data-cmd-key="mcp-add">Copy</button>
+        </div>
+        <p class="install-helper" style="margin-top: 4px; color: var(--text-mute);">
+          It passes your password to the server as an environment variable (so it isn't part of the AI's
+          chat), but it does sit in plain text in Claude Code's config file — see <strong>Harden it</strong>
+          below to keep it out of the config.
+        </p>
 
         <div class="how-it-works" style="margin: 14px 0 0 0;">
           <h3>Harden it (optional)</h3>
@@ -557,7 +567,7 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
             account can read, instead of inlining it:<br>
             <code>--env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password</code><br>
             <span style="color:var(--text-mute)">Create that file (macOS/Linux):
-            <code>umask 177 &amp;&amp; printf %s 'your-master-password' &gt; ~/.keyvault-sidekick/password</code>.
+            <code>umask 177 &amp;&amp; printf %s 'PUT-YOUR-PASSWORD-HERE' &gt; ~/.keyvault-sidekick/password</code>.
             On Windows, save it somewhere only your account can read.</span>
           </p>
           <p style="margin-top: 10px;">
@@ -592,7 +602,7 @@ claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./k
           <p style="margin-top: 8px;">
             One-time setup — put the CLI on your PATH and give it your password (once per terminal):<br>
             <code>cd keyvault-sidekick/mcp &amp;&amp; npm link</code><br>
-            <code>export KEYVAULT_PASSWORD=your-master-password</code>
+            <code>export KEYVAULT_PASSWORD=PUT-YOUR-PASSWORD-HERE</code>
           </p>
           <p style="margin-top: 8px;">Then pipe a value straight to its destination:<br>
             <code>keyvault get Velocity STRIPE_SECRET | wrangler secret put STRIPE_SECRET</code><br>

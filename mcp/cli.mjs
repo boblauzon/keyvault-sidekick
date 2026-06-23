@@ -26,7 +26,7 @@ import {
   status as vaultStatus, changePassword, resolveSecret, stripTrailingNewlines,
 } from './vault-core.mjs';
 
-const VERSION = '0.3.3';
+const VERSION = '0.3.4';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
@@ -120,7 +120,7 @@ async function main() {
         status(`  • Right vault but you typed the wrong password into the MCP config?`);
         status(`    Reinstall with the correct one:`);
         status(`      claude mcp remove keyvault`);
-        status(`      claude mcp add keyvault --env KEYVAULT_PASSWORD=<correct> -- node <path>/mcp/index.mjs`);
+        status(`      claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD=<correct> -- node <path>/mcp/index.mjs`);
         status(`  • Want to change the vault's password (or fix a typo you DO remember)?`);
         status(`      KEYVAULT_PASSWORD=<current> KEYVAULT_NEW_PASSWORD=<new> keyvault change-password`);
       }

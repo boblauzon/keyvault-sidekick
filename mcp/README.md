@@ -112,7 +112,7 @@ with `npx -y keyvault-sidekick-mcp`.)
 ### Claude Code
 
 ```bash
-claude mcp add keyvault \
+claude mcp add keyvault --scope user \
   --env KEYVAULT_PASSWORD=your-master-password \
   -- node /absolute/path/to/keyvault-sidekick/mcp/index.mjs
 ```
@@ -250,7 +250,7 @@ and per-client config locations — is in **[TROUBLESHOOTING.md](TROUBLESHOOTING
   **`KEYVAULT_PASSWORD_FILE`** pointed at a locked-down file:
   ```sh
   umask 177 && printf %s 'your-master-password' > ~/.keyvault-sidekick/password   # 0600
-  claude mcp add keyvault --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
+  claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
   ```
   That way the config holds only a path, and the secret sits in one `0600` file you
   control. If you do use the inline `KEYVAULT_PASSWORD` env var, treat the config

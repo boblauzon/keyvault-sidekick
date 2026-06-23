@@ -2847,7 +2847,7 @@ Acknowledge that you're connected to my "${name}" project and list the key names
       function buildMcpInstall() {
         return (
 `git clone https://github.com/boblauzon/keyvault-sidekick
-claude mcp add keyvault --env KEYVAULT_PASSWORD=your-master-password -- node ./keyvault-sidekick/mcp/index.mjs`
+claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD=PUT-YOUR-PASSWORD-HERE -- node ./keyvault-sidekick/mcp/index.mjs`
         );
       }
 

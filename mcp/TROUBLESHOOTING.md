@@ -49,7 +49,7 @@ only need to point the agent at the **correct** password. Nothing gets re-encryp
 **Claude Code:**
 ```sh
 claude mcp remove keyvault
-claude mcp add keyvault --env KEYVAULT_PASSWORD=your-correct-password -- node /path/to/keyvault-sidekick/mcp/index.mjs
+claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD=your-correct-password -- node /path/to/keyvault-sidekick/mcp/index.mjs
 ```
 Then **restart Claude Code** and run `keyvault status` again — it should say `unlocked: YES`.
 
@@ -113,7 +113,7 @@ shell env — or the next unlock will fail. Re-run `keyvault status` to confirm.
 ```sh
 claude mcp list                 # see what's registered
 claude mcp remove keyvault      # uninstall
-claude mcp add keyvault --env KEYVAULT_PASSWORD=your-password -- node /path/to/keyvault-sidekick/mcp/index.mjs
+claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD=your-password -- node /path/to/keyvault-sidekick/mcp/index.mjs
 ```
 Restart Claude Code after either. Reinstalling does **not** touch your vault file —
 it only changes how the agent launches the server. Your keys stay put.
@@ -179,7 +179,7 @@ The server has no password to work with. Provide **one** of:
 
 ```sh
 umask 177 && printf %s 'your-master-password' > ~/.keyvault-sidekick/password
-claude mcp add keyvault --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
+claude mcp add keyvault --scope user --env KEYVAULT_PASSWORD_FILE=$HOME/.keyvault-sidekick/password -- node /path/to/mcp/index.mjs
 ```
 
 Then restart the agent. (`change-password` takes the same forms for the new

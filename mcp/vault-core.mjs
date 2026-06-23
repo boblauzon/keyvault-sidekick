@@ -83,6 +83,26 @@ export function isReadOnly() {
   return !!v && !['', '0', 'false', 'no', 'off'].includes(String(v).toLowerCase());
 }
 
+// The example placeholders that appear in the install templates. If someone runs
+// `claude mcp add … --env KEYVAULT_PASSWORD=your-master-password` literally (a very
+// common mistake), we catch it and fail loudly with a fixable message — instead of
+// silently creating/locking a vault to the literal placeholder text.
+const PLACEHOLDER_PASSWORDS = new Set([
+  'your-master-password', 'your_master_password', 'yourmasterpassword',
+  'your-real-password', 'your-password', 'master-password',
+  'put-your-password-here', 'replace-with-your-password', 'your-master-password-here',
+  '<your-password>', '<your-master-password>', 'changeme', 'placeholder',
+]);
+export function isPlaceholderPassword(pw) {
+  return PLACEHOLDER_PASSWORDS.has(String(pw).trim().toLowerCase());
+}
+function placeholderError(pw) {
+  return `"${pw}" is the example placeholder from the install command, not a real password. ` +
+    `Re-register with your actual KeyVault master password: ` +
+    `"claude mcp remove keyvault", then "claude mcp add keyvault --scope user ` +
+    `--env KEYVAULT_PASSWORD=<your real password> -- node <path>/mcp/index.mjs" — then restart your agent.`;
+}
+
 // ── Encoding (standard base64, matching btoa/atob) ───────────────────────────
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -201,6 +221,7 @@ async function ensureLoaded(forWrite) {
   if (CACHE) return CACHE;
   const password = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE');
   if (!password) throw new Error(noPasswordError());
+  if (isPlaceholderPassword(password)) throw new Error(placeholderError(password));
   const norm = normalizePassword(password);
 
   if (existsSync(VAULT_PATH)) {
@@ -380,6 +401,7 @@ export async function status() {
     unlocked: false,
   };
   if (resolveErr) { out.error = resolveErr; return out; }
+  if (isPlaceholderPassword(pw)) { out.error = placeholderError(pw); return out; }
   if (!out.exists) {
     out.note = 'No vault file yet — your first save will CREATE one, encrypted with the current ' +
                'master password. Double-check that password before the first save, because a typo ' +
@@ -416,6 +438,7 @@ export async function changePassword(newPassword) {
   if (!existsSync(VAULT_PATH)) {
     throw new Error(`No vault exists yet at ${VAULT_PATH} — nothing to re-key (a vault is created on your first save).`);
   }
+  if (isPlaceholderPassword(newPassword)) throw new Error('Refusing to set the example placeholder text as your password — use a real password.');
   const newNorm = normalizePassword(newPassword);
   const c = await ensureLoaded(true); // unlock with the CURRENT password; throws "Incorrect master password" if wrong
   const salt = randBytes(SALT_LENGTH);
