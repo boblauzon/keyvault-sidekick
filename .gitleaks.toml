@@ -1,8 +1,14 @@
 # gitleaks config for KeyVault Sidekick.
 # Extends the default ruleset and allowlists the documentation placeholders
 # (literal "x" filler keys like sk_live_xxx in the landing page / snippets / docs)
-# so example text never trips CI. A real key has varied characters and will NOT
-# match these patterns, so it is still caught.
+# so example text never trips CI.
+#
+# The regexes are ANCHORED (^...$). gitleaks matches allowlist regexes against the
+# detected secret WITHOUT anchoring by default, so an unanchored `sk_live_x{2,}`
+# would also match a REAL key whose random body merely starts with "xx"
+# (sk_live_xxAbC...), silently suppressing a live-key leak. Anchoring to the
+# whole placeholder shape allowlists `sk_live_xxx` but still catches any key with
+# a non-x character anywhere in the body.
 title = "KeyVault Sidekick"
 
 [extend]
@@ -11,7 +17,7 @@ useDefault = true
 [allowlist]
 description = "Documentation / example placeholders — not real secrets"
 regexes = [
-  '''sk_(live|test)_x{2,}''',
-  '''sk_clerk_x{2,}''',
-  '''pk_live_x{2,}''',
+  '''^sk_(live|test)_x+$''',
+  '''^sk_clerk_x+$''',
+  '''^pk_live_x+$''',
 ]

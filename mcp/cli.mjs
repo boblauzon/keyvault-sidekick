@@ -23,10 +23,10 @@
 import {
   VAULT_PATH,
   listProjects, listKeys, getKey, saveKey, generate, generateValue, exportEnv, createProject, deleteKey,
-  status as vaultStatus, changePassword, resolveSecret,
+  status as vaultStatus, changePassword, resolveSecret, stripTrailingNewlines,
 } from './vault-core.mjs';
 
-const VERSION = '0.3.1';
+const VERSION = '0.3.2';
 
 // ── Output discipline ────────────────────────────────────────────────────────
 // Secret values: stdout, raw. A trailing newline is added ONLY when stdout is a
@@ -57,7 +57,10 @@ async function readStdin() {
   }
   const chunks = [];
   for await (const c of process.stdin) chunks.push(c);
-  return Buffer.concat(chunks).toString('utf8').replace(/\r?\n$/, ''); // strip one trailing newline (from echo)
+  // Strip ONE trailing newline (the one `echo` adds) — deliberately not all, so a
+  // multi-line VALUE (e.g. a PEM) keeps its internal structure. Passwords use
+  // stripTrailingNewlines() (strip ALL) at their call site instead.
+  return Buffer.concat(chunks).toString('utf8').replace(/\r?\n$/, '');
 }
 
 const USAGE = `keyvault v${VERSION} — local KeyVault Sidekick CLI
@@ -103,9 +106,10 @@ async function main() {
   switch (cmd) {
     case 'status': {
       const s = await vaultStatus();
+      const pwState = s.passwordSet ? 'set' : (s.passwordConfigured ? 'configured but unusable (empty/unreadable)' : 'NOT set');
       status(`vault:     ${s.vaultPath}`);
       status(`exists:    ${s.exists ? 'yes' : 'no'}`);
-      status(`password:  ${s.passwordSet ? 'set' : 'NOT set'}`);
+      status(`password:  ${pwState}`);
       if (s.exists && s.passwordSet) status(`unlocked:  ${s.unlocked ? 'YES' : 'NO'}`);
       if (s.unlocked) { status(`projects:  ${s.projects}`); status(`keys:      ${s.keys}`); }
       if (s.note)  status(`\nnote: ${s.note}`);
@@ -119,7 +123,7 @@ async function main() {
         status(`  • Want to change the vault's password (or fix a typo you DO remember)?`);
         status(`      KEYVAULT_PASSWORD=<current> KEYVAULT_NEW_PASSWORD=<new> keyvault change-password`);
       }
-      if (s.passwordSet && s.exists && !s.unlocked) process.exitCode = 1;
+      if (s.error) process.exitCode = 1;   // any hard problem (wrong/empty/unreadable pw, corrupt vault) -> non-zero
       return;
     }
     case 'change-password': {
@@ -130,7 +134,7 @@ async function main() {
             '  KEYVAULT_NEW_PASSWORD=newpass keyvault change-password\n' +
             '  printf %s "newpass" | keyvault change-password');
         }
-        newPw = await readStdin();
+        newPw = stripTrailingNewlines(await readStdin());   // passwords: strip ALL trailing newlines
       }
       const r = await changePassword(newPw);
       status(`Re-keyed ${r.vaultPath} — ${r.projects} project(s), ${r.keys} key(s) preserved.`);

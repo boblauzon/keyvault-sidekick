@@ -38,7 +38,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      # Gates on vulnerabilities in PRODUCTION deps only (there are zero today, so
-      # this passes — it exists to catch the day a runtime dependency is added).
-      - name: Audit production dependencies
+      # Gates on vulnerabilities in PRODUCTION deps. Both the root and the
+      # published mcp/ package are audited; both have zero runtime deps today, so
+      # this passes — it exists to catch the day a runtime dependency is added.
+      - name: Audit root (production deps)
         run: npm audit --omit=dev --audit-level=high
+      - name: Audit mcp package (production deps)
+        working-directory: mcp
+        # mcp/ ships with no lockfile (zero deps); generate one on the fly so audit
+        # has a tree to check. When a runtime dep is later added, it gets audited.
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm audit --omit=dev --audit-level=high

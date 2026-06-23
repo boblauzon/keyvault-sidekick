@@ -30,19 +30,48 @@ export const VALID_TYPES = new Set(['api_key', 'secret', 'token', 'oauth', 'webh
 export const VAULT_PATH = process.env.KEYVAULT_VAULT_PATH ||
   join(homedir(), '.keyvault-sidekick', 'vault.json');
 
+// Strip trailing CR/LF from a secret. Newlines are an artifact of how a value is
+// stored in a file or piped on stdin — never part of a browser-typed password (a
+// password <input> can't contain them) — so removing ALL of them keeps file/env/
+// stdin byte-compatible with the browser vault. Trailing SPACES are left intact
+// (the browser keeps them, so they may be intentional). One shared helper so the
+// file path and the CLI's stdin path can never normalize differently.
+export function stripTrailingNewlines(s) {
+  return String(s).replace(/[\r\n]+$/, '');
+}
+
 // Resolve a secret from an env var, or from a file named by a `*_FILE` env var
 // (so the master password needn't sit inline in the agent's MCP config — point
-// it at a 0600 file instead). The file is read UTF-8 with one trailing newline
-// stripped. The direct env var wins if both are set.
+// it at a 0600 file instead). Trailing newlines are stripped from BOTH sources so
+// `echo pw > file` or an editor's final blank line can't silently corrupt the
+// password. The direct env var wins if both are set; an empty / whitespace-only
+// file resolves to '' (callers treat that as "no usable password").
 export function resolveSecret(envVar, fileEnvVar) {
   const direct = process.env[envVar];
-  if (direct != null && direct !== '') return direct;
+  if (direct != null && direct !== '') return stripTrailingNewlines(direct);
   const path = process.env[fileEnvVar];
   if (path) {
-    try { return readFileSync(path, 'utf8').replace(/\r?\n$/, ''); }
+    let content;
+    try { content = readFileSync(path, 'utf8'); }
     catch (e) { throw new Error(`Cannot read ${fileEnvVar} (${path}): ${e?.message || e}`); }
+    return stripTrailingNewlines(content);
   }
   return undefined;
+}
+
+// Whether ANY password source is configured (even if it resolves empty/unreadable).
+function passwordConfigured() {
+  return !!(process.env.KEYVAULT_PASSWORD || process.env.KEYVAULT_PASSWORD_FILE);
+}
+
+// The right "no usable password" message — distinguishes an empty / mis-mounted
+// password FILE (the var IS set, it just yields nothing) from nothing configured.
+function noPasswordError() {
+  const f = process.env.KEYVAULT_PASSWORD_FILE;
+  if (f && !process.env.KEYVAULT_PASSWORD) {
+    return `KEYVAULT_PASSWORD_FILE (${f}) is set but resolved to an empty password — put your master password in that file.`;
+  }
+  return 'No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.';
 }
 
 // ── Encoding (standard base64, matching btoa/atob) ───────────────────────────
@@ -159,7 +188,7 @@ let CACHE = null; // { vault, key, salt:Uint8Array, iterations }
 async function ensureLoaded(forWrite) {
   if (CACHE) return CACHE;
   const password = resolveSecret('KEYVAULT_PASSWORD', 'KEYVAULT_PASSWORD_FILE');
-  if (!password) throw new Error('No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.');
+  if (!password) throw new Error(noPasswordError());
   const norm = normalizePassword(password);
 
   if (existsSync(VAULT_PATH)) {
@@ -319,6 +348,7 @@ export async function status() {
   catch (e) { resolveErr = String(e?.message || e); }
   const out = {
     vaultPath: VAULT_PATH,
+    passwordConfigured: passwordConfigured(),
     passwordSet: !!pw,
     exists: existsSync(VAULT_PATH),
     unlocked: false,
@@ -330,7 +360,7 @@ export async function status() {
                'would lock the new vault to the typo.';
     return out;
   }
-  if (!out.passwordSet) { out.error = 'No master password — set KEYVAULT_PASSWORD or KEYVAULT_PASSWORD_FILE.'; return out; }
+  if (!out.passwordSet) { out.error = noPasswordError(); return out; }
   let blob;
   try { blob = JSON.parse(readFileSync(VAULT_PATH, 'utf8')); }
   catch { out.error = 'Vault file is not valid JSON: ' + VAULT_PATH; return out; }

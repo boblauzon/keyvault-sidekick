@@ -94,7 +94,7 @@ Two environment variables:
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `KEYVAULT_PASSWORD` | yes* | — | Your master password. Used only to derive the AES key; never written anywhere. |
-| `KEYVAULT_PASSWORD_FILE` | yes* | — | Alternative to the above: a path to a `0600` file holding the master password (read at startup, one trailing newline stripped). Keeps the password **out of your agent config**. The direct env var wins if both are set. |
+| `KEYVAULT_PASSWORD_FILE` | yes* | — | Alternative to the above: a path to a `0600` file holding the master password (read at startup; trailing newlines stripped). Keeps the password **out of your agent config**. The direct env var wins if both are set. |
 | `KEYVAULT_VAULT_PATH` | no | `~/.keyvault-sidekick/vault.json` | Where the encrypted vault file lives. Point it at a `.vault` exported from the web app to share one store. |
 
 \* Provide **one** of `KEYVAULT_PASSWORD` or `KEYVAULT_PASSWORD_FILE`. The file

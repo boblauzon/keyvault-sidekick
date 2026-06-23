@@ -175,7 +175,7 @@ The server has no password to work with. Provide **one** of:
 
 - `--env KEYVAULT_PASSWORD=…` (inline), or
 - `--env KEYVAULT_PASSWORD_FILE=/path/to/0600/file` — keeps the password **out of
-  your agent config**; the file is read at startup (one trailing newline stripped).
+  your agent config**; the file is read at startup (trailing newlines stripped).
 
 ```sh
 umask 177 && printf %s 'your-master-password' > ~/.keyvault-sidekick/password
