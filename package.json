@@ -9,6 +9,6 @@
     "deploy": "wrangler pages deploy public --project-name keyvault-sidekick --branch main"
   },
   "devDependencies": {
-    "wrangler": "4.98.0"
+    "wrangler": "4.127.1"
   }
 }
